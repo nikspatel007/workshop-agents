@@ -217,6 +217,12 @@ def evaluate_bs_detector():
 
 ## Quick Commands
 ```bash
+# Install dependencies
+pip install -r bs_detector/requirements.txt
+
+# Run tests
+pytest bs_detector/tests/ -v
+
 # Test individual modules
 python -m modules.m1_baseline
 

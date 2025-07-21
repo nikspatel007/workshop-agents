@@ -213,70 +213,93 @@ def get_settings() -> Dict[str, Any]:
     return settings
 ```
 
-## 4. MCP Client Wrapper
+## 4. Simple Tools Setup
 
 ```python
-# tools/mcp_client.py
-import json
-import asyncio
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+# tools/__init__.py
+"""
+Tools package for BS Detector.
+Provides simple, extensible tool implementations.
+"""
 
-class MCPClient:
-    """Wrapper for MCP (Model Context Protocol) client"""
+from typing import Dict, Any, Callable
+
+
+class ToolRegistry:
+    """Simple registry for managing tools"""
     
-    def __init__(self, config_path: str = "mcp_config.json"):
-        self.config_path = Path(config_path)
-        self.config = self._load_config()
+    def __init__(self):
+        self.tools: Dict[str, Callable] = {}
     
-    def _load_config(self) -> Dict[str, Any]:
-        """Load MCP configuration from file"""
-        if not self.config_path.exists():
-            raise FileNotFoundError(
-                f"MCP config not found at {self.config_path}"
-            )
-        
-        with open(self.config_path) as f:
-            return json.load(f)
+    def register(self, name: str, tool: Callable) -> None:
+        """Register a tool function"""
+        self.tools[name] = tool
     
-    async def test_connection(self) -> bool:
-        """Test MCP server connection"""
-        try:
-            # Simple connection test
-            # In real implementation, this would use the MCP protocol
-            return True
-        except Exception as e:
-            print(f"MCP connection failed: {e}")
-            return False
+    def get(self, name: str) -> Callable:
+        """Get a tool by name"""
+        if name not in self.tools:
+            raise ValueError(f"Tool '{name}' not found")
+        return self.tools[name]
     
-    async def call_tool(
-        self, 
-        server: str, 
-        tool: str, 
-        params: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Call a tool through MCP"""
-        # Placeholder for MCP tool calling
-        # In real implementation, this would use the MCP protocol
-        return {"status": "success", "data": {}}
+    def list_tools(self) -> list[str]:
+        """List all registered tools"""
+        return list(self.tools.keys())
+
+
+# Global registry instance
+tool_registry = ToolRegistry()
+
+
+# Example tool for testing
+def echo_tool(message: str) -> str:
+    """Simple echo tool for testing"""
+    return f"Echo: {message}"
+
+
+# Register the echo tool
+tool_registry.register("echo", echo_tool)
 ```
 
-## 5. MCP Configuration
+## 5. Basic Mock Search Tool
 
-```json
-{
-  "servers": {
-    "duckduckgo": {
-      "command": "npx",
-      "args": ["@duckduckgo/mcp-server"],
-      "env": {}
+```python
+# tools/mock_search.py
+"""
+Mock search tool for workshop consistency.
+Returns predictable aviation facts without external dependencies.
+"""
+
+from typing import List, Dict, Any
+
+
+def search_aviation_facts(query: str) -> List[Dict[str, Any]]:
+    """
+    Mock search that returns aviation facts.
+    Used for consistent workshop experience.
+    """
+    # Simple keyword-based responses
+    mock_data = {
+        "747": [
+            {"fact": "The Boeing 747 has 4 engines", "confidence": 1.0},
+            {"fact": "The 747 first flew in 1969", "confidence": 1.0}
+        ],
+        "concorde": [
+            {"fact": "The Concorde could fly at Mach 2.04", "confidence": 1.0},
+            {"fact": "The Concorde was retired in 2003", "confidence": 1.0}
+        ],
+        "default": [
+            {"fact": "Commercial pilots need an ATP license", "confidence": 0.9},
+            {"fact": "Modern aircraft have multiple redundant systems", "confidence": 0.9}
+        ]
     }
-  },
-  "client": {
-    "timeout": 30000,
-    "retries": 3
-  }
-}
+    
+    # Find matching facts
+    query_lower = query.lower()
+    for key, facts in mock_data.items():
+        if key in query_lower:
+            return facts
+    
+    return mock_data["default"]
 ```
 
 ## 6. Environment Variables Template

@@ -50,17 +50,24 @@ for key, value in settings.items():
     print(f"{key}: {value}")
 ```
 
-#### Test MCP Connection
+#### Test Tools Setup
 ```python
-import asyncio
-from tools.mcp_client import MCPClient
+from tools import tool_registry
+from tools.mock_search import search_aviation_facts
 
-async def test_mcp():
-    client = MCPClient()
-    connected = await client.test_connection()
-    print(f"MCP connection: {'✓' if connected else '✗'}")
+# Test tool registry
+print(f"Registered tools: {tool_registry.list_tools()}")
 
-asyncio.run(test_mcp())
+# Test echo tool
+echo = tool_registry.get("echo")
+result = echo("Hello workshop!")
+print(f"Echo test: {result}")
+
+# Test mock search
+facts = search_aviation_facts("Boeing 747")
+print(f"\nSearch results:")
+for fact in facts:
+    print(f"  - {fact['fact']} (confidence: {fact['confidence']})")
 ```
 
 ## Validation Checklist
@@ -86,11 +93,11 @@ asyncio.run(test_mcp())
 - [ ] Falls back to "local" appropriately
 - [ ] Settings are environment-appropriate
 
-### MCP Setup
-- [ ] mcp_config.json is valid JSON
-- [ ] MCP server can be started
-- [ ] Connection test passes
-- [ ] Error handling works for missing config
+### Tools Setup
+- [ ] Tool registry works correctly
+- [ ] Echo tool returns expected output
+- [ ] Mock search returns aviation facts
+- [ ] Tools can be retrieved by name
 
 ## Performance Benchmarks
 

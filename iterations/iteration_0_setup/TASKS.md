@@ -21,12 +21,12 @@
 - [ ] Add platform-specific configurations
 - [ ] Create validation for required settings
 
-## MCP Server Setup
-- [ ] Install DuckDuckGo MCP server: `npm install -g @duckduckgo/mcp-server`
-- [ ] Create `mcp_config.json` configuration file
-- [ ] Test MCP server connection
-- [ ] Create `tools/mcp_client.py` wrapper
-- [ ] Verify search functionality
+## Simple Tools Setup
+- [ ] Create `tools/` directory
+- [ ] Implement basic mock search tool for testing
+- [ ] Create tool registry pattern for future extensions
+- [ ] Add tool integration tests
+- [ ] Document tool usage patterns
 
 ## Testing Infrastructure
 - [ ] Install DeepEval: `pip install deepeval`
