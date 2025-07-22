@@ -6,13 +6,13 @@ This document outlines all iterations for building the BS detector system. Each 
 ## Iteration Progression
 
 ### ✅ Iteration 0: Environment & LLM Setup (10 min)
-**Status**: Documentation Complete
+**Status**: Complete
 
 **What We Build**:
 - LLM factory pattern for provider abstraction
 - Environment detection (Jupyter/Colab/SageMaker)
-- MCP server configuration
 - Project structure and testing framework
+- Basic MCP setup for later use
 
 **Key Learning**:
 - Factory pattern implementation
@@ -23,153 +23,131 @@ This document outlines all iterations for building the BS detector system. Each 
 **Deliverables**:
 - `config/llm_factory.py`
 - `config/settings.py`
-- `tools/mcp_client.py`
+- `tools/` directory structure
 - Test infrastructure
 
 ---
 
-### ✅ Iteration 1: Simple BS Detector (15 min)
-**Status**: Documentation Complete
+### ✅ Iteration 1: Baseline BS Detector (15 min)
+**Status**: Complete
 
 **What We Build**:
-- Basic `check_claim()` function
+- Basic `check_claim()` function with Pydantic
 - Aviation-focused prompt engineering
-- Response parsing with regex
-- Performance baseline establishment
+- Structured output parsing
+- Error handling and confidence scoring
 
 **Key Learning**:
 - Prompt engineering techniques
-- LLM response parsing
+- Pydantic for structured outputs
 - Error handling patterns
-- Performance measurement
+- Building a solid foundation
 
 **Deliverables**:
 - `modules/m1_baseline.py`
-- Test suite with DeepEval
-- Performance benchmarks
+- Basic test suite
+- Performance baseline
 - Interactive notebook
 
 ---
 
-### 📝 Iteration 2: Introduction to LangGraph (15 min)
-**Status**: Documentation Complete
+### ✅ Iteration 2: Introduction to LangGraph (15 min)
+**Status**: Complete
 
 **What We Build**:
-- First LangGraph-based BS detector
-- Understanding of nodes, state, edges, routing
-- Retry logic using graph cycles
-- Simple chat interface for testing
+- Convert baseline to LangGraph architecture
+- Add retry logic with exponential backoff
+- Interactive chat interface
+- Graph visualization
 
 **Key Learning**:
-- **Node**: Function that processes state
-- **State**: Shared data between nodes (TypedDict)
-- **Edge**: Connection between nodes
-- **Routing**: Conditional flow control
-- **Graph**: Complete state machine
+- **Core LangGraph concepts**: State, Node, Edge, Routing, Graph
+- State management with Pydantic BaseModel
+- Conditional routing for control flow
+- Building on previous work (wrapping baseline)
 
-**Core Components**:
-```python
-# 1. State
-class BSDetectorState(TypedDict):
-    claim: str
-    verdict: Optional[str]
-    retry_count: int
-
-# 2. Node
-def detect_bs_node(state) -> dict:
-    return {"verdict": "BS"}
-
-# 3. Graph
-graph = StateGraph(BSDetectorState)
-graph.add_node("detect", detect_bs_node)
-graph.compile()
-```
-
-**Execution Patterns**:
-- Single run: `app.invoke(state)`
-- Chat loop: Simple input/output loop
-
-**Expected Understanding**:
-- How to build a graph step by step
-- State management basics
-- Conditional routing for retries
-- Two ways to execute graphs
+**Deliverables**:
+- `modules/m2_langgraph.py`
+- Graph-based BS detector with retry
+- Chat interface pattern
+- Visual graph representation
 
 ---
 
-### 📝 Iteration 3: Multi-Step Processing (15 min)
+### 📝 Iteration 3: Adding Evaluation with DeepEval (15 min)
 **Status**: Planned
 
 **What We Build**:
-- Multi-node graph for claim extraction
-- Chain of processing steps
-- More complex state management
-- Advanced routing patterns
+- Systematic evaluation framework using DeepEval
+- Custom metrics for BS detection accuracy
+- Test dataset of aviation claims
+- Performance tracking over iterations
 
 **Key Learning**:
-- Building processing pipelines
-- State with lists and complex data
-- Multiple routing conditions
-- Node composition patterns
-
-**Graph Structure**:
-```python
-# Multi-step processing
-Start → Split → Extract → Deduplicate → Filter → Output
-         ↓
-      No Data → END
-```
+- LLM evaluation best practices
+- DeepEval metrics (relevancy, hallucination, custom)
+- Creating evaluation datasets
+- Tracking improvements quantitatively
 
 **Core Components**:
 ```python
-class ExtractorState(TypedDict):
-    text: str
-    sentences: List[str]
-    claims: List[dict]
-    filtered_claims: List[dict]
+# Custom metric for BS detection
+class BSDetectionAccuracy(BaseMetric):
+    def measure(self, test_case: LLMTestCase) -> float
     
-graph.add_node("split", split_text_node)
-graph.add_node("extract", extract_claims_node)
-graph.add_conditional_edges("extract", has_claims_router, {...})
+# Evaluation suite
+def evaluate_bs_detector(detector_func):
+    test_cases = load_aviation_test_set()
+    metrics = [BSDetectionAccuracy(), HallucinationMetric()]
+    return deepeval.evaluate(test_cases, metrics)
 ```
 
-**Expected Capabilities**:
-- Process text through multiple stages
-- Handle variable-length outputs
-- Conditional processing based on results
-- Clean error propagation
+**Why This Next**: Before adding complexity (tools, multi-agent), we need to measure if we're actually improving. This teaches students to think empirically about agent development.
 
 ---
 
-### 📝 Iteration 4: Evidence-Based Checking (20 min)
+### 📝 Iteration 4: Tool Integration - Web Search (20 min)
 **Status**: Planned
 
 **What We Build**:
-- DuckDuckGo MCP integration
-- `EvidenceRetriever` agent
-- Search query generation
-- Evidence scoring system
+- Add DuckDuckGo search tool to LangGraph
+- New node for evidence gathering
+- Tool-calling patterns in graphs
+- Evidence-based verdict revision
 
 **Key Learning**:
-- MCP tool integration
-- Search query optimization
-- Evidence ranking algorithms
-- Tool calling patterns
+- Tool integration in LangGraph
+- Tool binding to nodes
+- State updates from tool results
+- Conditional tool usage based on confidence
 
-**Planned Components**:
+**Graph Evolution**:
+```
+Detect BS → Low Confidence? → Search Evidence → Revise Verdict
+    ↓                                              ↓
+High Confidence → Format Output ←─────────────────┘
+```
+
+**Core Components**:
 ```python
-class EvidenceRetriever(BaseAgent):
-    def __init__(self, llm, search_tool: DuckDuckGoMCPTool)
-    async def find_evidence(self, claim: Claim) -> Evidence
-    def generate_queries(self, claim: Claim) -> List[str]
-    def score_evidence(self, evidence: List[SearchResult]) -> float
+class BSDetectorState(BaseModel):
+    claim: str
+    initial_verdict: Optional[str]
+    evidence: List[dict] = Field(default_factory=list)
+    final_verdict: Optional[str]
+    search_queries: List[str] = Field(default_factory=list)
+
+def search_evidence_node(state: BSDetectorState) -> dict:
+    if state.confidence < 70:  # Only search if uncertain
+        queries = generate_search_queries(state.claim)
+        evidence = search_tool.invoke(queries)
+        return {"evidence": evidence, "search_queries": queries}
 ```
 
 **Expected Improvements**:
-- 40% accuracy improvement
-- Real-time fact checking
-- Source attribution
-- Confidence calibration
+- Higher accuracy on fact-checkable claims
+- Source attribution for verdicts
+- Measured improvement via DeepEval
 
 ---
 
@@ -177,118 +155,155 @@ class EvidenceRetriever(BaseAgent):
 **Status**: Planned
 
 **What We Build**:
-- Confidence threshold system
-- Jupyter widget UI for reviews
-- Decision logging mechanism
-- Feedback incorporation
+- Human review node in LangGraph
+- Confidence-based routing to human
+- Simple review interface (terminal/notebook)
+- Feedback incorporation into verdict
 
 **Key Learning**:
-- Human-AI collaboration patterns
-- UI/UX for ML systems
-- Decision audit trails
-- Active learning concepts
+- Human-in-the-loop patterns with LangGraph
+- Conditional routing based on confidence
+- State persistence for human review
+- Async human interaction handling
 
-**Planned Components**:
-```python
-class HumanReviewUI:
-    def __init__(self, confidence_threshold: float = 0.7)
-    def needs_review(self, result: BSCheckResult) -> bool
-    def show_review_widget(self, claim: Claim, result: BSCheckResult)
-    def log_decision(self, decision: HumanDecision)
+**Graph Evolution**:
+```
+Evidence Analysis → Confidence Check → Human Review → Final Verdict
+                          ↓                              ↑
+                   High Confidence → Auto Verdict ───────┘
 ```
 
-**Expected Features**:
-- Interactive review interface
-- Confidence-based routing
-- Decision history tracking
-- Feedback loop for improvement
+**Core Components**:
+```python
+def route_to_human(state: BSDetectorState) -> str:
+    if state.confidence < 60 or state.conflicting_evidence:
+        return "human_review"
+    return "auto_verdict"
+
+def human_review_node(state: BSDetectorState) -> dict:
+    # Show evidence and initial verdict
+    print(f"Claim: {state.claim}")
+    print(f"AI Verdict: {state.initial_verdict} ({state.confidence}%)")
+    print(f"Evidence: {state.evidence}")
+    
+    human_verdict = input("Override verdict? (BS/LEGITIMATE/AGREE): ")
+    return {"final_verdict": human_verdict, "human_reviewed": True}
+```
 
 ---
 
-### 📝 Iteration 6: Full Orchestration (20 min)
+### 📝 Iteration 6: Multi-Agent Orchestration (20 min)
 **Status**: Planned
 
 **What We Build**:
-- LangGraph state machine
-- Complete pipeline integration
-- Error recovery strategies
-- Performance monitoring
+- Multiple specialized agents working together
+- Orchestrator pattern with LangGraph
+- Parallel processing capabilities
+- Complete BS detection system
 
 **Key Learning**:
-- Workflow orchestration
-- State management patterns
-- Pipeline optimization
-- Production considerations
+- Multi-agent design patterns
+- Agent specialization and communication
+- Parallel node execution in LangGraph
+- System-level thinking
 
-**Planned Components**:
-```python
-class BSDetectorPipeline:
-    def __init__(self, agents: Dict[str, BaseAgent])
-    def create_graph(self) -> Graph
-    async def run(self, text: str) -> PipelineResult
-    def visualize(self) -> None
+**Agent Architecture**:
+```
+                    ┌─→ Claim Analyzer Agent
+Input → Orchestrator ├─→ Evidence Searcher Agent  → Aggregator → Output
+                    └─→ Fact Checker Agent
 ```
 
-**Expected Capabilities**:
-- End-to-end processing
-- Parallel agent execution
-- State persistence
-- Performance analytics
+**Core Components**:
+```python
+class OrchestratorState(BaseModel):
+    claim: str
+    analysis_result: Optional[dict]
+    search_result: Optional[dict]
+    fact_check_result: Optional[dict]
+    final_verdict: Optional[str]
+
+# Parallel execution
+graph.add_node("analyze", claim_analyzer_agent)
+graph.add_node("search", evidence_searcher_agent)
+graph.add_node("fact_check", fact_checker_agent)
+
+# Fork from orchestrator
+graph.add_edge("orchestrator", "analyze")
+graph.add_edge("orchestrator", "search")
+graph.add_edge("orchestrator", "fact_check")
+
+# All merge at aggregator
+graph.add_edge("analyze", "aggregator")
+graph.add_edge("search", "aggregator")
+graph.add_edge("fact_check", "aggregator")
+```
 
 ---
 
 ## Progressive Complexity
 
-### Complexity Growth
-- **Iteration 0-1**: Single function → Single LLM call
-- **Iteration 2**: Function → LangGraph basics (node, state, edge, routing)
-- **Iteration 3**: Single node → Multi-step pipeline
-- **Iteration 4**: No tools → Web search integration
-- **Iteration 5**: Automatic → Human oversight
-- **Iteration 6**: Simple graphs → Full orchestration
+### Building Blocks
+1. **Iteration 0-1**: Foundation - LLM calls and structured outputs
+2. **Iteration 2**: LangGraph basics - graphs, nodes, routing
+3. **Iteration 3**: Evaluation - measuring what we build
+4. **Iteration 4**: Tools - extending capabilities with search
+5. **Iteration 5**: Human oversight - confidence-based escalation
+6. **Iteration 6**: Multi-agent - specialized agents working together
 
-### Skill Development
-1. **Basic**: Prompt engineering, Pydantic models
-2. **Intermediate**: LangGraph fundamentals, state management, routing
-3. **Advanced**: Tool integration, complex graphs, orchestration
+### Key Principles
+- Each iteration adds ONE major concept
+- Always build on previous work (never throw away code)
+- Measure improvements with DeepEval
+- Keep the aviation domain throughout
+- Maintain backward compatibility
 
 ### Time Investment
-- **Core iterations (0-3)**: 55 minutes
-- **Advanced iterations (4-6)**: 55 minutes
-- **Total workshop**: 110 minutes (leaving 10 min buffer)
+- **Foundation (0-2)**: 40 minutes
+- **Enhancement (3-5)**: 50 minutes 
+- **Advanced (6)**: 20 minutes
+- **Buffer**: 10 minutes
+- **Total**: 120 minutes
 
 ## Implementation Strategy
 
 ### For Each Iteration
-1. Review previous iteration's HANDOFF.md
-2. Implement core functionality
-3. Add tests with DeepEval
-4. Create interactive notebook
-5. Document lessons learned
-6. Prepare handoff for next iteration
+1. Review previous HANDOFF.md
+2. Add new capability to existing code
+3. Measure improvement with DeepEval
+4. Update notebook with new concepts
+5. Document what changed and why
 
 ### Success Metrics
-- Each iteration builds on previous
-- Clear improvement in capabilities
-- Maintainable, documented code
-- Testable components
-- Workshop-friendly timing
+- Each iteration improves accuracy (measured)
+- Code remains clean and modular
+- Students understand WHY each addition matters
+- Clear progression from simple to complex
 
-## Workshop Considerations
+## Workshop Flow
 
-### Participant Experience
-- **Beginners**: Focus on iterations 0-2
-- **Intermediate**: Complete iterations 0-4
-- **Advanced**: All iterations + extensions
+### Act 1: Foundation (40 min)
+- Setup → Baseline → LangGraph basics
+- Students can build basic agents
 
-### Fallback Options
-- Pre-built solutions for each iteration
-- Simplified versions for time constraints
-- Optional extensions for fast learners
+### Act 2: Enhancement (50 min)
+- Evaluation → Tools → Human-in-loop
+- Students learn to improve agents systematically
 
-### Key Takeaways
-1. Incremental development works
-2. Structure improves reliability
-3. Tools enhance capabilities
-4. Human oversight matters
-5. Orchestration enables scale
+### Act 3: Advanced (20 min)
+- Multi-agent orchestration
+- Students see the full potential
+
+### Flexibility
+- Can stop after any iteration
+- Each iteration is self-contained
+- Fast learners can explore extensions
+
+## Key Takeaways by Iteration
+1. **Setup**: Good tooling matters
+2. **Baseline**: Start simple, use structured outputs
+3. **LangGraph**: Graphs enable complex flows
+4. **Evaluation**: Measure everything
+5. **Tools**: External data improves accuracy
+6. **Human-in-loop**: Confidence-based escalation
+7. **Multi-agent**: Specialization and orchestration

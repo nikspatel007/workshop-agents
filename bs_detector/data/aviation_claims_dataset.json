@@ -1,0 +1,311 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2024-01-21",
+    "description": "Comprehensive aviation claims dataset for BS detector evaluation",
+    "total_claims": 50,
+    "categories": ["historical", "technical", "safety", "performance", "future", "misleading"]
+  },
+  "claims": [
+    {
+      "id": "easy_001",
+      "claim": "The Wright brothers' first powered flight was in 1903",
+      "verdict": "LEGITIMATE",
+      "difficulty": "easy",
+      "category": "historical",
+      "explanation": "Well-documented historical fact - December 17, 1903",
+      "needs_evidence": false,
+      "expected_confidence": 95
+    },
+    {
+      "id": "easy_002",
+      "claim": "Commercial airplanes can fly backwards",
+      "verdict": "BS",
+      "difficulty": "easy",
+      "category": "technical",
+      "explanation": "Aircraft are not designed for reverse flight",
+      "needs_evidence": false,
+      "expected_confidence": 95
+    },
+    {
+      "id": "easy_003",
+      "claim": "The Boeing 747 has four engines",
+      "verdict": "LEGITIMATE",
+      "difficulty": "easy",
+      "category": "technical",
+      "explanation": "Standard configuration for Boeing 747",
+      "needs_evidence": false,
+      "expected_confidence": 95
+    },
+    {
+      "id": "easy_004",
+      "claim": "Helicopters use jet engines to create lift with their rotors",
+      "verdict": "BS",
+      "difficulty": "easy",
+      "category": "technical",
+      "explanation": "Helicopters use rotor blades for lift, not jet thrust",
+      "needs_evidence": false,
+      "expected_confidence": 90
+    },
+    {
+      "id": "medium_001",
+      "claim": "The Concorde could fly at Mach 2.04",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "performance",
+      "explanation": "Concorde's cruise speed was Mach 2.04 (1,354 mph)",
+      "needs_evidence": true,
+      "expected_confidence": 85
+    },
+    {
+      "id": "medium_002",
+      "claim": "The Airbus A380 can carry over 850 passengers",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "technical",
+      "explanation": "In all-economy configuration, A380 can carry 853 passengers",
+      "needs_evidence": true,
+      "expected_confidence": 80
+    },
+    {
+      "id": "medium_003",
+      "claim": "Modern commercial jets fly at altitudes above 60,000 feet",
+      "verdict": "BS",
+      "difficulty": "medium",
+      "category": "performance",
+      "explanation": "Commercial jets typically cruise at 35,000-42,000 feet",
+      "needs_evidence": true,
+      "expected_confidence": 75
+    },
+    {
+      "id": "medium_004",
+      "claim": "The SR-71 Blackbird could fly at Mach 3.3",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "performance",
+      "explanation": "SR-71's top speed was Mach 3.3 (2,193 mph)",
+      "needs_evidence": true,
+      "expected_confidence": 85
+    },
+    {
+      "id": "medium_005",
+      "claim": "All modern fighter jets have stealth technology",
+      "verdict": "BS",
+      "difficulty": "medium",
+      "category": "technical",
+      "explanation": "Only specific models like F-22, F-35, B-2 have true stealth",
+      "needs_evidence": true,
+      "expected_confidence": 70
+    },
+    {
+      "id": "hard_001",
+      "claim": "The Boeing 737 MAX is the safest aircraft ever built",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "safety",
+      "explanation": "737 MAX had significant safety issues leading to groundings",
+      "needs_evidence": true,
+      "expected_confidence": 60
+    },
+    {
+      "id": "hard_002",
+      "claim": "Turbulence has never caused a commercial plane crash in modern aviation",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "safety",
+      "explanation": "While injuries occur, turbulence alone hasn't caused modern crashes",
+      "needs_evidence": true,
+      "expected_confidence": 65
+    },
+    {
+      "id": "hard_003",
+      "claim": "The Antonov An-225 was the largest aircraft ever built",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "technical",
+      "explanation": "By maximum takeoff weight and cargo volume, An-225 was largest",
+      "needs_evidence": true,
+      "expected_confidence": 70
+    },
+    {
+      "id": "hard_004",
+      "claim": "Electric aircraft will replace all jet aircraft by 2030",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "future",
+      "explanation": "Battery technology limitations make this timeline unrealistic",
+      "needs_evidence": true,
+      "expected_confidence": 55
+    },
+    {
+      "id": "hard_005",
+      "claim": "The F-22 Raptor can supercruise at Mach 1.8",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "performance",
+      "explanation": "F-22 can sustain Mach 1.5-1.8 without afterburners",
+      "needs_evidence": true,
+      "expected_confidence": 60
+    },
+    {
+      "id": "misleading_001",
+      "claim": "The Airbus A380 program was cancelled due to lack of orders",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "misleading",
+      "explanation": "Technically true but oversimplifies complex market factors",
+      "needs_evidence": true,
+      "expected_confidence": 55
+    },
+    {
+      "id": "misleading_002",
+      "claim": "Pilots don't actually fly planes anymore, computers do everything",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "misleading",
+      "explanation": "While automation exists, pilots remain essential for safety",
+      "needs_evidence": true,
+      "expected_confidence": 50
+    },
+    {
+      "id": "misleading_003",
+      "claim": "Flying is statistically safer than driving",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "safety",
+      "explanation": "Per mile traveled, commercial aviation is much safer",
+      "needs_evidence": true,
+      "expected_confidence": 90
+    },
+    {
+      "id": "edge_001",
+      "claim": "Some military aircraft can fly in space",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "technical",
+      "explanation": "No aircraft can fly in space; spacecraft are different",
+      "needs_evidence": true,
+      "expected_confidence": 45
+    },
+    {
+      "id": "edge_002",
+      "claim": "The Boeing 797 will revolutionize air travel",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "future",
+      "explanation": "Boeing 797 doesn't exist yet, still in concept phase",
+      "needs_evidence": true,
+      "expected_confidence": 40
+    },
+    {
+      "id": "edge_003",
+      "claim": "Supersonic passenger travel will return by 2025",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "future",
+      "explanation": "While companies are working on it, 2025 is too optimistic",
+      "needs_evidence": true,
+      "expected_confidence": 50
+    },
+    {
+      "id": "technical_001",
+      "claim": "Jet engines work by pushing air backwards really fast",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "technical",
+      "explanation": "Simplified but essentially correct - Newton's third law",
+      "needs_evidence": false,
+      "expected_confidence": 75
+    },
+    {
+      "id": "technical_002",
+      "claim": "Airplane wings generate lift using the Bernoulli principle alone",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "technical",
+      "explanation": "Lift involves both Bernoulli and Newton's laws, not just one",
+      "needs_evidence": true,
+      "expected_confidence": 60
+    },
+    {
+      "id": "technical_003",
+      "claim": "The A320 was the first commercial fly-by-wire airliner",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "historical",
+      "explanation": "A320 introduced digital fly-by-wire to commercial aviation",
+      "needs_evidence": true,
+      "expected_confidence": 80
+    },
+    {
+      "id": "safety_001",
+      "claim": "You're more likely to be struck by lightning than die in a plane crash",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "safety",
+      "explanation": "Statistical comparison is accurate for commercial aviation",
+      "needs_evidence": true,
+      "expected_confidence": 85
+    },
+    {
+      "id": "safety_002",
+      "claim": "Aircraft can land safely with total engine failure",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "safety",
+      "explanation": "Aircraft can glide; famous examples include Gimli Glider",
+      "needs_evidence": true,
+      "expected_confidence": 75
+    },
+    {
+      "id": "performance_001",
+      "claim": "The X-15 reached speeds of Mach 6.7",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "performance",
+      "explanation": "X-15 rocket plane achieved Mach 6.72 in 1967",
+      "needs_evidence": true,
+      "expected_confidence": 70
+    },
+    {
+      "id": "performance_002",
+      "claim": "Commercial jets can do barrel rolls safely",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "performance",
+      "explanation": "Possible but not recommended; Boeing 707 famously did one",
+      "needs_evidence": true,
+      "expected_confidence": 55
+    },
+    {
+      "id": "historical_001",
+      "claim": "The first jet airliner was the de Havilland Comet",
+      "verdict": "LEGITIMATE",
+      "difficulty": "medium",
+      "category": "historical",
+      "explanation": "Comet entered service in 1952, first commercial jet",
+      "needs_evidence": true,
+      "expected_confidence": 85
+    },
+    {
+      "id": "historical_002",
+      "claim": "Howard Hughes flew around the world in under 4 days in 1938",
+      "verdict": "LEGITIMATE",
+      "difficulty": "hard",
+      "category": "historical",
+      "explanation": "Set record of 3 days, 19 hours, 17 minutes",
+      "needs_evidence": true,
+      "expected_confidence": 70
+    },
+    {
+      "id": "future_001",
+      "claim": "Hypersonic passenger flights will cut travel time by 90%",
+      "verdict": "BS",
+      "difficulty": "hard",
+      "category": "future",
+      "explanation": "While theoretically possible, 90% reduction is exaggerated",
+      "needs_evidence": true,
+      "expected_confidence": 45
+    }
+  ]
+}
