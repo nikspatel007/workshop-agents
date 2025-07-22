@@ -3,8 +3,8 @@ LLM Factory for creating language model instances across different providers.
 Supports OpenAI, Anthropic, AWS Bedrock, and Azure OpenAI.
 """
 
-import os
 from typing import Optional, Any
+from .settings import settings
 
 
 class LLMFactory:
@@ -12,7 +12,7 @@ class LLMFactory:
     
     @staticmethod
     def create_llm(
-        provider: str = "openai",
+        provider: Optional[str] = None,
         model: Optional[str] = None,
         **kwargs
     ) -> Any:
@@ -20,7 +20,7 @@ class LLMFactory:
         Create an LLM instance based on the provider.
         
         Args:
-            provider: The LLM provider ('openai', 'anthropic', 'bedrock', 'azure')
+            provider: The LLM provider (defaults to configured provider)
             model: The specific model to use (optional)
             **kwargs: Additional provider-specific arguments
             
@@ -31,6 +31,13 @@ class LLMFactory:
             ValueError: If the provider is not supported
             EnvironmentError: If required API keys are missing
         """
+        # Use default provider if not specified
+        if provider is None:
+            provider = settings.default_llm_provider
+            if not provider:
+                raise EnvironmentError(
+                    "No LLM provider configured. Please set API keys in .env file."
+                )
         providers = {
             "openai": LLMFactory._create_openai,
             "anthropic": LLMFactory._create_anthropic,
@@ -51,19 +58,18 @@ class LLMFactory:
         """Create OpenAI LLM instance"""
         from langchain_openai import ChatOpenAI
         
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
+        if not settings.openai_api_key:
             raise EnvironmentError(
-                "OPENAI_API_KEY not found in environment variables"
+                "OPENAI_API_KEY not found. Please set it in .env file."
             )
         
         # Extract temperature to avoid duplicate argument error
-        temperature = kwargs.pop("temperature", 0.7)
+        temperature = kwargs.pop("temperature", settings.llm_temperature)
         
         return ChatOpenAI(
-            model=model or "gpt-4",
+            model=model or settings.openai_model,
             temperature=temperature,
-            api_key=api_key,
+            api_key=settings.openai_api_key,
             **kwargs
         )
     
@@ -72,19 +78,18 @@ class LLMFactory:
         """Create Anthropic LLM instance"""
         from langchain_anthropic import ChatAnthropic
         
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
+        if not settings.anthropic_api_key:
             raise EnvironmentError(
-                "ANTHROPIC_API_KEY not found in environment variables"
+                "ANTHROPIC_API_KEY not found. Please set it in .env file."
             )
         
         # Extract temperature to avoid duplicate argument error
-        temperature = kwargs.pop("temperature", 0.7)
+        temperature = kwargs.pop("temperature", settings.llm_temperature)
         
         return ChatAnthropic(
-            model=model or "claude-3-opus-20240229",
+            model=model or settings.anthropic_model,
             temperature=temperature,
-            api_key=api_key,
+            api_key=settings.anthropic_api_key,
             **kwargs
         )
     
@@ -93,16 +98,20 @@ class LLMFactory:
         """Create AWS Bedrock LLM instance"""
         from langchain_aws import ChatBedrock
         
-        region = os.getenv("AWS_REGION", "us-east-1")
+        if not (settings.aws_access_key_id and settings.aws_secret_access_key):
+            raise EnvironmentError(
+                "AWS credentials not found. Please set AWS_ACCESS_KEY_ID and "
+                "AWS_SECRET_ACCESS_KEY in .env file."
+            )
         
         # Extract temperature if provided in kwargs
-        temperature = kwargs.pop("temperature", 0.7)
+        temperature = kwargs.pop("temperature", settings.llm_temperature)
         model_kwargs = kwargs.pop("model_kwargs", {})
         model_kwargs["temperature"] = temperature
         
         return ChatBedrock(
-            model_id=model or "anthropic.claude-v2",
-            region_name=region,
+            model_id=model or settings.bedrock_model,
+            region_name=settings.aws_region,
             model_kwargs=model_kwargs,
             **kwargs
         )
@@ -112,22 +121,19 @@ class LLMFactory:
         """Create Azure OpenAI LLM instance"""
         from langchain_openai import AzureChatOpenAI
         
-        endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-        api_key = os.getenv("AZURE_OPENAI_API_KEY")
-        
-        if not endpoint or not api_key:
+        if not (settings.azure_openai_endpoint and settings.azure_openai_api_key):
             raise EnvironmentError(
-                "AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY "
-                "must be set in environment variables"
+                "Azure OpenAI credentials not found. Please set AZURE_OPENAI_ENDPOINT "
+                "and AZURE_OPENAI_API_KEY in .env file."
             )
         
         # Extract temperature to avoid duplicate argument error
-        temperature = kwargs.pop("temperature", 0.7)
+        temperature = kwargs.pop("temperature", settings.llm_temperature)
         
         return AzureChatOpenAI(
-            deployment_name=model or "gpt-4",
-            openai_api_base=endpoint,
-            openai_api_key=api_key,
+            deployment_name=model or settings.azure_deployment,
+            openai_api_base=settings.azure_openai_endpoint,
+            openai_api_key=settings.azure_openai_api_key,
             openai_api_version="2023-05-15",
             temperature=temperature,
             **kwargs
