@@ -57,8 +57,11 @@ class LLMFactory:
     def _create_openai(model: Optional[str], **kwargs):
         """Create OpenAI LLM instance"""
         from langchain_openai import ChatOpenAI
+        import os
         
-        if not settings.openai_api_key:
+        # Check both settings and environment directly
+        api_key = settings.openai_api_key or os.environ.get("OPENAI_API_KEY")
+        if not api_key:
             raise EnvironmentError(
                 "OPENAI_API_KEY not found. Please set it in .env file."
             )
@@ -69,7 +72,7 @@ class LLMFactory:
         return ChatOpenAI(
             model=model or settings.openai_model,
             temperature=temperature,
-            api_key=settings.openai_api_key,
+            api_key=api_key,
             **kwargs
         )
     

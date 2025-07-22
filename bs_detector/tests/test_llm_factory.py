@@ -42,19 +42,29 @@ def test_factory_raises_for_unknown_provider():
 
 def test_factory_raises_for_missing_api_key():
     """Test that factory raises error when API key is missing"""
-    # Save and remove API key if it exists
-    original_key = os.environ.get("OPENAI_API_KEY")
-    os.environ.pop("OPENAI_API_KEY", None)
+    from unittest.mock import patch
     
-    try:
-        with pytest.raises(EnvironmentError) as exc_info:
-            LLMFactory.create_llm("openai")
+    # Mock the settings to have no API key
+    with patch('config.llm_factory.settings') as mock_settings:
+        # Set all the necessary attributes
+        mock_settings.openai_api_key = None
+        mock_settings.default_llm_provider = None
+        mock_settings.openai_model = "gpt-4"
+        mock_settings.llm_temperature = 0.7
         
-        assert "OPENAI_API_KEY not found" in str(exc_info.value)
-    finally:
-        # Restore original key
-        if original_key:
-            os.environ["OPENAI_API_KEY"] = original_key
+        # Also ensure os.environ doesn't have the key
+        original_key = os.environ.get("OPENAI_API_KEY")
+        os.environ.pop("OPENAI_API_KEY", None)
+        
+        try:
+            with pytest.raises(EnvironmentError) as exc_info:
+                LLMFactory.create_llm("openai")
+            
+            assert "OPENAI_API_KEY not found" in str(exc_info.value)
+        finally:
+            # Restore original key
+            if original_key:
+                os.environ["OPENAI_API_KEY"] = original_key
 
 
 def test_factory_temperature_parameter():

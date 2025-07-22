@@ -135,10 +135,30 @@ def get_settings() -> dict:
     """
     env = detect_environment()
     
+    # Determine auth method based on environment
+    if env == "colab":
+        auth_method = "userdata"
+    elif env == "sagemaker":
+        auth_method = "iam"
+    else:
+        auth_method = "env"
+    
+    # Determine notebook type
+    if env == "colab":
+        notebook_type = "colab"
+    elif env == "sagemaker":
+        notebook_type = "sagemaker"
+    elif env == "jupyter":
+        notebook_type = "jupyter"
+    else:
+        notebook_type = "none"
+    
     return {
         "environment": env,
         "llm_provider": settings.default_llm_provider or "openai",
         "debug": os.getenv("BS_DETECTOR_DEBUG", "0") == "1",
         "platform": platform.system().lower(),
-        "configured_providers": settings.get_configured_providers()
+        "configured_providers": settings.get_configured_providers(),
+        "notebook_type": notebook_type,
+        "auth_method": auth_method
     }

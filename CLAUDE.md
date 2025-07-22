@@ -21,6 +21,8 @@ Build a BS detector using multi-agent architecture with LangChain/LangGraph, dem
 Input → Claim Extraction → Evidence Search → Credibility Scoring → Report Generation
          ↓                  ↓                 ↓                    ↓
          LLM               MCP/DuckDuckGo    LLM + Rules         LLM + Template
+         
+All orchestrated via LangGraph State Machines with memory and tool management
 ```
 
 ## Available MCP Tools
@@ -39,17 +41,39 @@ Each module should:
 - Handle errors gracefully
 - Be testable in isolation
 
-### 2. Agent Pattern
+### 2. LangGraph Agent Pattern
+
+**IMPORTANT**: Always use Pydantic BaseModel for state management in LangGraph, never TypedDict.
+
 ```python
-class BaseAgent:
-    """All agents inherit from this"""
-    def __init__(self, llm, tools=None):
-        self.llm = llm
-        self.tools = tools or []
+from langgraph.graph import StateGraph, State
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from langchain_core.messages import BaseMessage
+
+class AgentState(BaseModel):
+    """Shared state for all agents - MUST use Pydantic BaseModel"""
+    messages: List[BaseMessage] = Field(default_factory=list)
+    current_claim: str = ""
+    evidence: List[dict] = Field(default_factory=list)
+    verdict: Optional[str] = None
+    confidence: float = 0.0
+    errors: List[str] = Field(default_factory=list)
+
+def create_agent_graph():
+    graph = StateGraph(AgentState)
     
-    async def process(self, input_data):
-        """Override in subclasses"""
-        raise NotImplementedError
+    # Add nodes for each agent
+    graph.add_node("claim_extractor", claim_extraction_node)
+    graph.add_node("evidence_searcher", evidence_search_node)
+    graph.add_node("bs_detector", bs_detection_node)
+    
+    # Define edges
+    graph.add_edge("claim_extractor", "evidence_searcher")
+    graph.add_edge("evidence_searcher", "bs_detector")
+    
+    # Compile and return
+    return graph.compile()
 ```
 
 ### 3. Tool Integration
@@ -75,6 +99,42 @@ except Exception as e:
     evidence = {"error": "Search unavailable", "fallback": True}
 ```
 
+## Notebook Documentation Standards
+
+### Required for Each Notebook
+1. **Title and Overview** - Clear description of what the iteration covers
+2. **Mermaid Diagram** - Visual representation of the agent/system architecture
+3. **Learning Objectives** - 3-5 bullet points of key takeaways
+4. **Code Structure** - Clear sections with markdown headers
+5. **Testing Examples** - Interactive cells demonstrating functionality
+
+### Mermaid Diagram Template
+```python
+import base64
+from IPython.display import Image, display
+
+def render_mermaid_diagram(graph_definition):
+    """Render mermaid diagram in Jupyter using mermaid.ink API"""
+    graph_bytes = graph_definition.encode("utf-8")
+    base64_string = base64.b64encode(graph_bytes).decode("ascii")
+    image_url = f"https://mermaid.ink/img/{base64_string}?type=png"
+    
+    # Display the image
+    return Image(url=image_url)
+
+# Example usage
+mermaid_graph = """
+graph TD
+    A[Input Text] --> B[Claim Extractor]
+    B --> C{Multiple Claims?}
+    C -->|Yes| D[Deduplicate]
+    C -->|No| E[Single Claim]
+    D --> F[BS Detector]
+    E --> F
+"""
+display(render_mermaid_diagram(mermaid_graph))
+```
+
 ## Implementation Checklist
 
 ### Module 0: Setup ✓
@@ -87,30 +147,35 @@ except Exception as e:
 - [ ] Basic prompt template
 - [ ] Response parsing
 
-### Module 2: Structured Agent
-- [ ] Agent base class
+### Module 2: Structured Agent with LangGraph
+- [ ] LangGraph state definition
 - [ ] Input/output models (Pydantic)
-- [ ] Retry logic
+- [ ] Agent as graph node
+- [ ] State transitions and retry logic
 
-### Module 3: Claim Extraction
-- [ ] Split text into atomic claims
-- [ ] Claim deduplication
-- [ ] Relevance filtering
+### Module 3: Claim Extraction with LangGraph
+- [ ] Multi-claim state management
+- [ ] Claim deduplication node
+- [ ] Relevance filtering node
+- [ ] Parallel processing with graph
 
-### Module 4: Evidence Search
-- [ ] DuckDuckGo MCP integration
+### Module 4: Evidence Search with Tools
+- [ ] DuckDuckGo MCP as LangGraph tool
+- [ ] Tool binding to nodes
 - [ ] Query generation strategy
-- [ ] Result ranking/filtering
+- [ ] Result aggregation in state
 
 ### Module 5: Human-in-the-Loop
-- [ ] Confidence thresholds
-- [ ] Review UI (Jupyter widgets)
-- [ ] Decision logging
+- [ ] Conditional edges based on confidence
+- [ ] Human review node
+- [ ] State persistence for review
+- [ ] Feedback incorporation
 
-### Module 6: Orchestration
-- [ ] LangGraph state machine
-- [ ] Error recovery
+### Module 6: Full Orchestration
+- [ ] Complete LangGraph pipeline
+- [ ] Checkpointing and recovery
 - [ ] Performance monitoring
+- [ ] Memory persistence
 
 ## Testing Strategy
 ```python

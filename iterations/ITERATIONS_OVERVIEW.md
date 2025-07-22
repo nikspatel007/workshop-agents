@@ -51,65 +51,93 @@ This document outlines all iterations for building the BS detector system. Each 
 
 ---
 
-### 📝 Iteration 2: Structured Agent (15 min)
-**Status**: Planned
+### 📝 Iteration 2: Introduction to LangGraph (15 min)
+**Status**: Documentation Complete
 
 **What We Build**:
-- `BSAgent` class inheriting from `BaseAgent`
-- Pydantic models for input/output validation
-- Retry logic for reliability
-- Async support for scalability
+- First LangGraph-based BS detector
+- Understanding of nodes, state, edges, routing
+- Retry logic using graph cycles
+- Simple chat interface for testing
 
 **Key Learning**:
-- Agent design patterns
-- Structured data validation with Pydantic
-- Retry strategies and error recovery
-- Async/await patterns
+- **Node**: Function that processes state
+- **State**: Shared data between nodes (TypedDict)
+- **Edge**: Connection between nodes
+- **Routing**: Conditional flow control
+- **Graph**: Complete state machine
 
-**Planned Components**:
+**Core Components**:
 ```python
-class BSAgent(BaseAgent):
-    def __init__(self, llm, config=None)
-    def check(self, claim: ClaimInput) -> BSCheckResult
-    async def acheck(self, claim: ClaimInput) -> BSCheckResult
+# 1. State
+class BSDetectorState(TypedDict):
+    claim: str
+    verdict: Optional[str]
+    retry_count: int
+
+# 2. Node
+def detect_bs_node(state) -> dict:
+    return {"verdict": "BS"}
+
+# 3. Graph
+graph = StateGraph(BSDetectorState)
+graph.add_node("detect", detect_bs_node)
+graph.compile()
 ```
 
-**Expected Improvements**:
-- Type safety with Pydantic
-- 30% reduction in parse errors
-- Configurable retry behavior
-- Structured logging
+**Execution Patterns**:
+- Single run: `app.invoke(state)`
+- Chat loop: Simple input/output loop
+
+**Expected Understanding**:
+- How to build a graph step by step
+- State management basics
+- Conditional routing for retries
+- Two ways to execute graphs
 
 ---
 
-### 📝 Iteration 3: Multi-Claim Extraction (15 min)
+### 📝 Iteration 3: Multi-Step Processing (15 min)
 **Status**: Planned
 
 **What We Build**:
-- `ClaimExtractor` agent for text parsing
-- Claim deduplication logic
-- Batch processing optimization
-- Relevance filtering
+- Multi-node graph for claim extraction
+- Chain of processing steps
+- More complex state management
+- Advanced routing patterns
 
 **Key Learning**:
-- Text chunking strategies
-- Information extraction patterns
-- Batch vs sequential processing
-- Memory efficiency
+- Building processing pipelines
+- State with lists and complex data
+- Multiple routing conditions
+- Node composition patterns
 
-**Planned Components**:
+**Graph Structure**:
 ```python
-class ClaimExtractor(BaseAgent):
-    def extract(self, text: str) -> List[Claim]
-    def deduplicate(self, claims: List[Claim]) -> List[Claim]
-    def filter_relevant(self, claims: List[Claim]) -> List[Claim]
+# Multi-step processing
+Start → Split → Extract → Deduplicate → Filter → Output
+         ↓
+      No Data → END
+```
+
+**Core Components**:
+```python
+class ExtractorState(TypedDict):
+    text: str
+    sentences: List[str]
+    claims: List[dict]
+    filtered_claims: List[dict]
+    
+graph.add_node("split", split_text_node)
+graph.add_node("extract", extract_claims_node)
+graph.add_conditional_edges("extract", has_claims_router, {...})
 ```
 
 **Expected Capabilities**:
-- Extract 5-10 claims from paragraph
-- Remove duplicate/similar claims
-- Filter non-aviation claims
-- Maintain claim context
+- Process text through multiple stages
+- Handle variable-length outputs
+- Conditional processing based on results
+- Clean error propagation
 
 ---
 
@@ -213,16 +241,16 @@ class BSDetectorPipeline:
 
 ### Complexity Growth
 - **Iteration 0-1**: Single function → Single LLM call
-- **Iteration 2**: Function → Class with structure
-- **Iteration 3**: Single claim → Multiple claims
-- **Iteration 4**: No evidence → Web search integration
+- **Iteration 2**: Function → LangGraph basics (node, state, edge, routing)
+- **Iteration 3**: Single node → Multi-step pipeline
+- **Iteration 4**: No tools → Web search integration
 - **Iteration 5**: Automatic → Human oversight
-- **Iteration 6**: Sequential → Orchestrated pipeline
+- **Iteration 6**: Simple graphs → Full orchestration
 
 ### Skill Development
-1. **Basic**: Prompt engineering, parsing
-2. **Intermediate**: OOP, async, error handling
-3. **Advanced**: Tool integration, UI, state machines
+1. **Basic**: Prompt engineering, Pydantic models
+2. **Intermediate**: LangGraph fundamentals, state management, routing
+3. **Advanced**: Tool integration, complex graphs, orchestration
 
 ### Time Investment
 - **Core iterations (0-3)**: 55 minutes
