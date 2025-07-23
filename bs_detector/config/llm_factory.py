@@ -131,6 +131,7 @@ class LLMFactory:
             "anthropic.claude-3-haiku-20240307-v1:0"
         )
         
+        # ChatBedrock handles the Messages API format automatically
         return ChatBedrock(
             model_id=model_id,
             region_name=region,
