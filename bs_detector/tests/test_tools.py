@@ -1,22 +1,26 @@
 """
-Tests for tool integration (Iteration 4)
+Tests for tool integration (Iteration 4) - Multi-Agent System
 """
 
 import pytest
+import json
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, List
 
 from modules.m4_tools import (
-    BSDetectorState,
-    initial_check_node,
-    generate_queries_node,
-    search_web_node,
-    analyze_evidence_node,
-    revise_verdict_node,
-    format_output_node,
-    route_after_initial_check,
-    check_claim_with_tools,
-    create_bs_detector_with_tools
+    ToolEnhancedState,
+    WebSearchResult,
+    search_for_information,
+    current_events_expert_with_tools_node,
+    create_tool_enhanced_bs_detector,
+    check_claim_with_tools
+)
+from modules.m3_routing import (
+    MultiAgentState,
+    router_node,
+    technical_expert_node,
+    historical_expert_node,
+    general_expert_node
 )
 from tools.search_tool import (
     WebSearchTool,
@@ -96,215 +100,124 @@ class TestSearchTool:
         assert len(facts) <= 10  # Should limit facts
 
 
-class TestToolNodes:
-    """Test individual nodes in the tool-enhanced graph"""
+class TestMultiAgentRouting:
+    """Test multi-agent routing system"""
     
-    @patch('modules.m4_tools.LLMFactory.create_llm')
-    @patch('modules.m4_tools.check_claim')
-    def test_initial_check_node(self, mock_check_claim, mock_llm):
-        """Test initial check node"""
-        # Mock baseline check
-        mock_check_claim.return_value = {
-            "verdict": "LEGITIMATE",
-            "confidence": 65,  # Low confidence
-            "reasoning": "Seems plausible"
-        }
-        
-        state = BSDetectorState(claim="Test claim")
-        result = initial_check_node(state)
-        
-        assert result["initial_verdict"] == "LEGITIMATE"
-        assert result["initial_confidence"] == 65
-        assert result["needs_search"] == True  # Should search due to low confidence
-    
-    def test_generate_queries_node(self):
-        """Test query generation node"""
-        state = BSDetectorState(claim="The Concorde could fly at Mach 2")
-        result = generate_queries_node(state)
-        
-        assert "search_queries" in result
-        assert len(result["search_queries"]) > 0
-        assert any("Concorde" in q for q in result["search_queries"])
-    
-    @patch('modules.m4_tools.WebSearchTool')
-    def test_search_web_node(self, mock_tool_class):
-        """Test web search node"""
-        # Mock search tool
-        mock_tool = Mock()
-        mock_tool.search_multiple.return_value = [
-            {"success": True, "results": "Concorde flew at Mach 2.04", "query": "Concorde speed"}
-        ]
-        mock_tool.extract_facts.return_value = ["Concorde flew at Mach 2.04"]
-        mock_tool_class.return_value = mock_tool
-        
-        state = BSDetectorState(
-            claim="Concorde speed",
-            search_queries=["Concorde speed", "Concorde Mach"]
-        )
-        result = search_web_node(state)
-        
-        assert result["used_search"] == True
-        assert len(result["extracted_facts"]) > 0
-        assert len(result["sources_used"]) > 0
-    
-    @patch('modules.m4_tools.LLMFactory.create_llm')
-    def test_analyze_evidence_node(self, mock_llm):
-        """Test evidence analysis node"""
-        # Mock LLM response
+    @patch('modules.m3_routing.LLMFactory.create_llm')
+    def test_router_node(self, mock_llm):
+        """Test router correctly classifies claims"""
+        # Mock LLM response for technical claim
         mock_response = Mock()
-        mock_response.content = """
-        SUMMARY: Evidence confirms Concorde could fly at Mach 2.04
-        ASSESSMENT: SUPPORTS
-        KEY FACTS: Concorde cruise speed was Mach 2.04
-        """
+        mock_response.content = "CLAIM_TYPE: technical\nCONFIDENCE_LEVEL: high"
         mock_llm.return_value.invoke.return_value = mock_response
         
-        state = BSDetectorState(
-            claim="Concorde could fly at Mach 2",
-            extracted_facts=["Concorde flew at Mach 2.04", "Cruise speed was supersonic"]
-        )
-        result = analyze_evidence_node(state)
+        state = MultiAgentState(claim="The F-22 can fly at Mach 2.2")
+        result = router_node(state)
         
-        assert "evidence_summary" in result
-        assert result["evidence_supports_claim"] == True  # Should detect SUPPORTS
+        assert result["claim_type"] == "technical"
+        assert result["confidence_level"] == "high"
     
-    def test_revise_verdict_node_confirm(self):
-        """Test verdict revision when evidence confirms"""
-        state = BSDetectorState(
-            claim="Test claim",
-            initial_verdict="LEGITIMATE",
-            initial_confidence=65,
-            initial_reasoning="Seems right",
-            evidence_supports_claim=True,
-            evidence_summary="Evidence confirms this"
-        )
+    @patch('modules.m3_routing.LLMFactory.create_llm')
+    def test_router_current_events(self, mock_llm):
+        """Test router identifies current events"""
+        mock_response = Mock()
+        mock_response.content = "CLAIM_TYPE: current_event\nCONFIDENCE_LEVEL: medium"
+        mock_llm.return_value.invoke.return_value = mock_response
         
-        result = revise_verdict_node(state)
+        state = MultiAgentState(claim="Apple announced new products yesterday")
+        result = router_node(state)
         
-        assert result["final_verdict"] == "LEGITIMATE"
-        assert result["final_confidence"] > 65  # Should increase confidence
-        assert "Evidence" in result["final_reasoning"]
-    
-    def test_revise_verdict_node_contradict(self):
-        """Test verdict revision when evidence contradicts"""
-        state = BSDetectorState(
-            claim="Test claim",
-            initial_verdict="LEGITIMATE",
-            initial_confidence=65,
-            initial_reasoning="Seems right",
-            evidence_supports_claim=False,
-            evidence_summary="Evidence refutes this"
-        )
-        
-        result = revise_verdict_node(state)
-        
-        assert result["final_verdict"] == "BS"  # Should flip verdict
-        assert result["final_confidence"] == 80
-        assert "evidence indicates otherwise" in result["final_reasoning"]
-    
-    def test_format_output_node(self):
-        """Test output formatting"""
-        state = BSDetectorState(
-            claim="Test",
-            initial_verdict="BS",
-            initial_confidence=85,
-            initial_reasoning="Initial reason",
-            final_verdict="LEGITIMATE",
-            final_confidence=90,
-            final_reasoning="Updated reason",
-            used_search=True,
-            sources_used=["query1", "query2"]
-        )
-        
-        result = format_output_node(state)
-        
-        assert result["final_verdict"] == "LEGITIMATE"  # Uses final when search used
-        assert result["final_confidence"] == 90
-        assert "Sources consulted" in result["final_reasoning"]
+        assert result["claim_type"] == "current_event"
 
 
-class TestRouting:
-    """Test routing logic"""
+class TestToolIntegration:
+    """Test tool integration with current events expert"""
     
-    def test_route_after_initial_check_high_confidence(self):
-        """Test routing with high confidence"""
-        state = BSDetectorState(
-            claim="Test",
-            needs_search=False
-        )
-        
-        route = route_after_initial_check(state)
-        assert route == "format_output"
-    
-    def test_route_after_initial_check_low_confidence(self):
-        """Test routing with low confidence"""
-        state = BSDetectorState(
-            claim="Test",
-            needs_search=True
-        )
-        
-        route = route_after_initial_check(state)
-        assert route == "generate_queries"
-
-
-class TestEndToEnd:
-    """Test complete tool-enhanced detection"""
-    
-    @patch('modules.m4_tools.check_claim')
     @patch('modules.m4_tools.WebSearchTool')
-    @patch('modules.m4_tools.LLMFactory.create_llm')
-    def test_check_claim_with_tools_high_confidence(self, mock_llm, mock_tool_class, mock_check):
-        """Test claim with high confidence (skip search)"""
-        # Mock high confidence baseline result
-        mock_check.return_value = {
-            "verdict": "LEGITIMATE",
-            "confidence": 90,
-            "reasoning": "Obviously true"
+    def test_search_for_information_tool(self, mock_tool_class):
+        """Test the search_for_information tool function"""
+        # Mock search tool
+        mock_tool = Mock()
+        mock_tool.search_web.return_value = {
+            "success": True,
+            "query": "test query",
+            "results": "Some results"
         }
+        mock_tool.extract_facts.return_value = ["Fact 1", "Fact 2"]
+        mock_tool_class.return_value = mock_tool
         
-        result = check_claim_with_tools("Water is wet")
+        result = search_for_information("test query")
+        import json
+        result_data = json.loads(result)  # It returns JSON string
+        
+        assert result_data["search_successful"] == True
+        assert len(result_data["facts"]) == 2
+    
+    @patch('modules.m4_tools.LLMFactory.create_llm')
+    def test_current_events_expert_no_tools(self, mock_llm):
+        """Test current events expert when tools not needed"""
+        # Mock LLM without tool calls
+        mock_response = Mock()
+        mock_response.content = "VERDICT: LEGITIMATE\nCONFIDENCE: 95\nREASONING: Historical fact"
+        mock_response.tool_calls = []
+        
+        mock_llm_instance = Mock()
+        mock_llm_instance.bind_tools.return_value.invoke.return_value = mock_response
+        mock_llm.return_value = mock_llm_instance
+        
+        state = ToolEnhancedState(claim="World War II ended in 1945")
+        result = current_events_expert_with_tools_node(state)
         
         assert result["verdict"] == "LEGITIMATE"
-        assert result["confidence"] == 90
-        assert result["used_search"] == False
-        
-        # Search tool should not be called
-        mock_tool_class.assert_not_called()
+        assert result["confidence"] == 95
+        assert result["search_performed"] == False
+        assert result["tools_used"] == []
     
-    @patch('modules.m4_tools.check_claim')
-    @patch('modules.m4_tools.WebSearchTool')
     @patch('modules.m4_tools.LLMFactory.create_llm')
-    def test_check_claim_with_tools_low_confidence(self, mock_llm, mock_tool_class, mock_check):
-        """Test claim with low confidence (trigger search)"""
-        # Mock low confidence baseline result
-        mock_check.return_value = {
-            "verdict": "LEGITIMATE",
-            "confidence": 50,
-            "reasoning": "Not sure"
+    @patch('modules.m4_tools.search_for_information')
+    def test_current_events_expert_with_tools(self, mock_search_tool, mock_llm):
+        """Test current events expert using tools"""
+        # Mock tool call
+        tool_call = {
+            "name": "search_for_information",
+            "args": {"query": "SpaceX launches yesterday"},
+            "id": "call_123"
         }
         
+        # Mock initial response with tool call
+        mock_initial_response = Mock()
+        mock_initial_response.content = "Need to search"
+        mock_initial_response.tool_calls = [tool_call]
+        
+        # Mock final response after tool use
+        mock_final_response = Mock()
+        mock_final_response.content = "VERDICT: BS\nCONFIDENCE: 90\nREASONING: No launches found"
+        
         # Mock search tool
-        mock_tool = Mock()
-        mock_tool.search_multiple.return_value = [
-            {"success": True, "results": "Evidence supports claim"}
-        ]
-        mock_tool.extract_facts.return_value = ["Supporting fact"]
-        mock_tool_class.return_value = mock_tool
+        mock_search_tool.invoke.return_value = '{"query": "SpaceX launches yesterday", "facts": ["No launches"], "search_successful": true}'
         
-        # Mock evidence analysis
-        mock_response = Mock()
-        mock_response.content = "ASSESSMENT: SUPPORTS"
-        mock_llm.return_value.invoke.return_value = mock_response
+        # Setup LLM mock
+        mock_llm_instance = Mock()
+        mock_llm_with_tools = Mock()
+        mock_llm_with_tools.invoke.side_effect = [mock_initial_response, mock_final_response]
+        mock_llm_instance.bind_tools.return_value = mock_llm_with_tools
+        mock_llm.return_value = mock_llm_instance
         
-        result = check_claim_with_tools("Complex claim")
+        state = ToolEnhancedState(claim="SpaceX launched 5 rockets yesterday")
+        result = current_events_expert_with_tools_node(state)
         
-        assert result["used_search"] == True
-        assert result["confidence"] >= 40  # Should be at least 40
-        mock_tool_class.assert_called_once()
+        assert result["verdict"] == "BS"
+        assert result["confidence"] == 90
+        assert result["search_performed"] == True
+        assert "search_for_information" in result["tools_used"]
+
+
+class TestGraphStructure:
+    """Test graph structure and components"""
     
     def test_create_graph(self):
         """Test graph creation"""
-        app = create_bs_detector_with_tools()
+        app = create_tool_enhanced_bs_detector()
         
         # Check graph structure
         assert app is not None
@@ -315,56 +228,56 @@ class TestEndToEnd:
         
         # Verify all nodes present
         expected_nodes = [
-            "initial_check",
-            "generate_queries", 
-            "search_web",
-            "analyze_evidence",
-            "revise_verdict",
-            "format_output"
+            "router",
+            "technical_expert",
+            "historical_expert", 
+            "current_events_expert",
+            "general_expert"
         ]
         
         for node in expected_nodes:
             assert node in nodes
+    
+    def test_state_structure(self):
+        """Test the enhanced state includes all necessary fields"""
+        state = ToolEnhancedState(claim="Test claim")
+        
+        # Check inherited fields
+        assert state.claim == "Test claim"
+        assert state.claim_type is None
+        assert state.verdict is None
+        
+        # Check tool-specific fields
+        assert state.search_performed == False
+        assert state.search_results is None
+        assert state.tools_used == []
+        assert state.messages == []
 
 
 class TestErrorHandling:
-    """Test error handling in tool integration"""
+    """Test error handling in multi-agent system"""
     
-    @patch('modules.m4_tools.check_claim')
-    def test_initial_check_error(self, mock_check):
-        """Test handling of initial check errors"""
-        mock_check.side_effect = Exception("LLM error")
+    @patch('modules.m3_routing.LLMFactory.create_llm')
+    def test_router_error_defaults_to_general(self, mock_llm):
+        """Test router defaults to general on error"""
+        mock_llm.return_value.invoke.side_effect = Exception("LLM error")
         
-        state = BSDetectorState(claim="Test")
-        result = initial_check_node(state)
+        state = MultiAgentState(claim="Test claim")
+        result = router_node(state)
         
-        assert "error" in result
-        assert result["needs_search"] == True  # Should try search on error
+        # Should default to general
+        assert result["claim_type"] == "general"
+        assert result["confidence_level"] == "medium"
     
     @patch('modules.m4_tools.WebSearchTool')
-    def test_search_failure_handling(self, mock_tool_class):
-        """Test handling of search failures"""
+    def test_search_tool_error_handling(self, mock_tool_class):
+        """Test search tool handles errors gracefully"""
         mock_tool = Mock()
-        mock_tool.search_multiple.side_effect = Exception("Network error")
+        mock_tool.search_web.side_effect = Exception("Network error")
         mock_tool_class.return_value = mock_tool
         
-        state = BSDetectorState(
-            claim="Test",
-            search_queries=["query"]
-        )
-        result = search_web_node(state)
+        result = search_for_information("test query")
+        result_data = json.loads(result)
         
-        assert "error" in result
-        assert result["used_search"] == True
-    
-    def test_no_evidence_handling(self):
-        """Test handling when no evidence found"""
-        state = BSDetectorState(
-            claim="Test",
-            extracted_facts=[]  # No facts found
-        )
-        
-        result = analyze_evidence_node(state)
-        
-        assert result["evidence_summary"] == "No evidence found through search."
-        assert result["evidence_supports_claim"] is None
+        assert result_data["search_successful"] == False
+        assert "Network error" in result_data["error"]
