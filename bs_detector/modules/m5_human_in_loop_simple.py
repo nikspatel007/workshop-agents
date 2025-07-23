@@ -193,11 +193,11 @@ def check_claim_with_human_review(claim: str, thread_id: str = "default") -> dic
     # Configuration with thread ID for checkpointing
     config = {"configurable": {"thread_id": thread_id}}
     
-    # Initial state
+    # Initial state - convert to dict for invoke
     initial_state = HumanInLoopState(claim=claim)
     
     # Run the graph - it may interrupt for human review
-    result = app.invoke(initial_state, config)
+    result = app.invoke(initial_state.model_dump(), config)
     
     # Check if we got a final result or if we're interrupted
     if isinstance(result, dict) and "result" in result:
@@ -230,16 +230,22 @@ def resume_after_human_input(
     # Configuration with thread ID
     config = {"configurable": {"thread_id": thread_id}}
     
-    # Update state with human feedback
-    human_updates = {
-        "verdict": verdict,
-        "confidence": confidence,
-        "reasoning": f"Human review: {reasoning}",
-        "human_feedback_received": True
-    }
+    # When resuming, we need to provide None as input (graph will use checkpoint)
+    # and pass updates as a separate parameter
+    result = app.invoke(None, config, interrupt_before=[])
     
-    # Resume from interrupt with human feedback
-    result = app.invoke(human_updates, config)
+    # If we're still interrupted, update with human feedback
+    if result is None or "result" not in result:
+        # Update state with human feedback
+        human_updates = {
+            "verdict": verdict,
+            "confidence": confidence,
+            "reasoning": f"Human review: {reasoning}",
+            "human_feedback_received": True
+        }
+        
+        # Resume from interrupt with human feedback by updating the state
+        result = app.invoke(human_updates, config)
     
     if isinstance(result, dict) and "result" in result:
         return result["result"]
