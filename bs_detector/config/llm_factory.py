@@ -42,7 +42,8 @@ class LLMFactory:
             "openai": LLMFactory._create_openai,
             "anthropic": LLMFactory._create_anthropic,
             "bedrock": LLMFactory._create_bedrock,
-            "azure": LLMFactory._create_azure
+            "azure": LLMFactory._create_azure,
+            "lmstudio": LLMFactory._create_lmstudio
         }
         
         if provider not in providers:
@@ -138,6 +139,42 @@ class LLMFactory:
             openai_api_base=settings.azure_openai_endpoint,
             openai_api_key=settings.azure_openai_api_key,
             openai_api_version="2023-05-15",
+            temperature=temperature,
+            **kwargs
+        )
+    
+    @staticmethod
+    def _create_lmstudio(model: Optional[str], **kwargs):
+        """
+        Create LM Studio LLM instance (OpenAI-compatible local endpoint)
+        
+        LM Studio provides an OpenAI-compatible API endpoint for local models.
+        Default endpoint is http://localhost:1234/v1
+        """
+        from langchain_openai import ChatOpenAI
+        import os
+        
+        # Get LM Studio endpoint from settings or use default
+        base_url = getattr(settings, 'lmstudio_base_url', None) or os.environ.get(
+            "LMSTUDIO_BASE_URL", 
+            "http://localhost:1234/v1"
+        )
+        
+        # Extract temperature to avoid duplicate argument error
+        temperature = kwargs.pop("temperature", settings.llm_temperature)
+        
+        # LM Studio doesn't require an API key, but OpenAI client needs one
+        # Use a dummy key if none provided
+        api_key = kwargs.pop("api_key", "lm-studio")
+        
+        # Get model from settings or use the one currently loaded in LM Studio
+        # LM Studio will use whatever model is currently loaded if not specified
+        model_name = model or getattr(settings, 'lmstudio_model', None) or "lmstudio-model"
+        
+        return ChatOpenAI(
+            base_url=base_url,
+            api_key=api_key,
+            model=model_name,
             temperature=temperature,
             **kwargs
         )

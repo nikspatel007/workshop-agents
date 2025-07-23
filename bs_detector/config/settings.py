@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     aws_secret_access_key: Optional[str] = Field(default=None)
     aws_region: str = Field(default="us-east-1")
     
+    # LM Studio Settings
+    lmstudio_base_url: Optional[str] = Field(default="http://localhost:1234/v1")
+    lmstudio_model: Optional[str] = Field(default=None)
+    
     # Default LLM Provider
     default_llm_provider: Optional[str] = Field(default=None)
     
@@ -67,7 +71,7 @@ class Settings(BaseSettings):
     @classmethod
     def validate_provider(cls, v: Optional[str]) -> Optional[str]:
         """Validate the provider is supported"""
-        if v and v not in ["openai", "anthropic", "bedrock", "azure"]:
+        if v and v not in ["openai", "anthropic", "bedrock", "azure", "lmstudio"]:
             return None
         return v
     
@@ -83,6 +87,8 @@ class Settings(BaseSettings):
             providers.append("bedrock")
         if self.azure_openai_api_key and self.azure_openai_endpoint:
             providers.append("azure")
+        # LM Studio is always available (no API key needed)
+        providers.append("lmstudio")
             
         return providers
     

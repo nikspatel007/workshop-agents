@@ -46,6 +46,17 @@ bs_detector/
 - Anthropic (Claude)
 - AWS Bedrock
 - Azure OpenAI
+- LM Studio (Local LLMs) - **NEW!**
+
+### Using LM Studio (Run Offline!)
+Want to run the workshop completely offline? Use LM Studio:
+
+1. Download [LM Studio](https://lmstudio.ai/)
+2. Download a model (e.g., Mistral 7B)
+3. Start the server in LM Studio
+4. Set in `.env`: `DEFAULT_LLM_PROVIDER=lmstudio`
+
+See [docs/using_lmstudio.md](docs/using_lmstudio.md) for detailed instructions.
 
 ## Environment Detection
 Automatically detects and configures for:
