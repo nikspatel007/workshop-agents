@@ -1,28 +1,27 @@
 """
-SageMaker Setup Script for BS Detector Workshop
-This script sets up the environment for running the workshop on SageMaker with AWS Bedrock
+Clean SageMaker Setup Script - Creates a proper Jupyter kernel
 """
 
 import subprocess
 import sys
 import os
 import json
-from pathlib import Path
 
 
-def install_requirements():
-    """Install required packages for SageMaker"""
+def install_packages():
+    """Install required packages"""
     print("📦 Installing required packages...")
     
     packages = [
+        "ipykernel",  # Required for creating kernels
         "langchain>=0.1.0",
         "langgraph>=0.0.20",
-        "langchain-aws",  # For Bedrock support
+        "langchain-aws",
         "langchain-community",
         "pydantic>=2.0",
         "python-dotenv",
         "duckduckgo-search",
-        "boto3>=1.28.0",  # For AWS services
+        "boto3>=1.28.0",
     ]
     
     for package in packages:
@@ -32,160 +31,191 @@ def install_requirements():
     print("✅ All packages installed successfully!")
 
 
-def setup_bedrock_config():
-    """Configure AWS Bedrock for the workshop"""
-    print("\n🔧 Setting up AWS Bedrock configuration...")
+def create_workshop_kernel():
+    """Create a dedicated kernel for the workshop"""
+    print("\n🔧 Creating workshop kernel...")
     
-    # Check if running in SageMaker
-    if os.path.exists("/opt/ml"):
-        print("✅ Running in SageMaker environment")
-        
-        # SageMaker provides AWS credentials automatically via IAM role
-        print("✅ Using SageMaker execution role for AWS credentials")
-        
-        # Set default Bedrock model - Claude 3 Haiku
-        os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-5-haiku-20241022-v1:0"
-        os.environ["DEFAULT_LLM_PROVIDER"] = "bedrock"
-        os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
-        
-    else:
-        print("⚠️  Not running in SageMaker - manual AWS configuration needed")
-        
-        # For local testing
-        region = input("Enter AWS region (default: us-east-1): ").strip() or "us-east-1"
-        os.environ["AWS_DEFAULT_REGION"] = region
-        os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-sonnet-20240229-v1:0"
-        os.environ["DEFAULT_LLM_PROVIDER"] = "bedrock"
+    kernel_name = "workshop_kernel"
+    display_name = "Workshop Kernel (BS Detector)"
     
-    # Create .env file for the workshop
-    env_content = f"""# BS Detector Workshop Configuration
-# Generated for SageMaker with AWS Bedrock
-
-# Default LLM Provider
-DEFAULT_LLM_PROVIDER=bedrock
-
-# AWS Bedrock Configuration
-BEDROCK_MODEL=anthropic.claude-3-5-haiku-20241022-v1:0
-AWS_DEFAULT_REGION=us-west-2
-
-# Model Parameters
-LLM_TEMPERATURE=0.7
-LLM_MAX_TOKENS=2000
-
-# Optional: Add other providers as fallback
-# OPENAI_API_KEY=your-key-here
-# ANTHROPIC_API_KEY=your-key-here
-"""
+    # Install the kernel
+    subprocess.check_call([
+        sys.executable, "-m", "ipykernel", "install",
+        "--user",
+        "--name", kernel_name,
+        "--display-name", display_name
+    ])
     
-    with open(".env", "w") as f:
-        f.write(env_content)
+    print(f"✅ Created kernel: {display_name}")
+    print(f"   Internal name: {kernel_name}")
     
-    print("✅ Created .env file with Bedrock configuration")
-
-
-def test_bedrock_connection():
-    """Test that Bedrock is accessible"""
-    print("\n🧪 Testing AWS Bedrock connection...")
+    # Get kernel location and update with environment variables
+    kernel_dir = os.path.expanduser(f"~/.local/share/jupyter/kernels/{kernel_name}")
+    kernel_json_path = os.path.join(kernel_dir, "kernel.json")
     
-    try:
-        import boto3
+    if os.path.exists(kernel_json_path):
+        with open(kernel_json_path, 'r') as f:
+            kernel_spec = json.load(f)
         
-        # Create Bedrock client
-        bedrock = boto3.client('bedrock-runtime', region_name=os.environ.get('AWS_DEFAULT_REGION', 'us-east-1'))
+        # Add environment variables to the kernel
+        kernel_spec["env"] = {
+            "DEFAULT_LLM_PROVIDER": "bedrock",
+            "BEDROCK_MODEL": "anthropic.claude-3-5-haiku-20241022-v1:0",
+            "AWS_DEFAULT_REGION": "us-west-2"
+        }
         
-        # Test with a simple prompt
-        from config.llm_factory import LLMFactory
+        with open(kernel_json_path, 'w') as f:
+            json.dump(kernel_spec, f, indent=2)
         
-        llm = LLMFactory.create_llm(provider="bedrock")
-        response = llm.invoke("Say 'Hello from AWS Bedrock!'")
-        
-        if hasattr(response, 'content'):
-            print(f"✅ Bedrock test successful: {response.content}")
-        else:
-            print(f"✅ Bedrock test successful: {response}")
-            
-        return True
-        
-    except Exception as e:
-        print(f"❌ Bedrock test failed: {str(e)}")
-        print("\nTroubleshooting:")
-        print("1. Ensure your SageMaker execution role has Bedrock permissions")
-        print("2. Check that Bedrock is available in your region")
-        print("3. Verify the model ID is correct")
-        return False
+        print("✅ Added environment variables to kernel")
+    
+    return kernel_name
 
 
-def create_test_notebook():
-    """Create a test notebook to verify setup"""
-    print("\n📓 Creating test notebook...")
+def create_verification_notebook():
+    """Create a notebook to verify the setup"""
+    print("\n📓 Creating verification notebook...")
     
     notebook_content = {
         "cells": [
             {
                 "cell_type": "markdown",
                 "metadata": {},
-                "source": ["# BS Detector Workshop - Setup Test\n", "\n", "This notebook tests that everything is set up correctly."]
+                "source": [
+                    "# Workshop Setup Verification\n",
+                    "\n",
+                    "This notebook verifies that your workshop environment is set up correctly.\n",
+                    "\n",
+                    "**IMPORTANT**: Make sure you're using the **Workshop Kernel (BS Detector)** kernel.\n",
+                    "- Check in the top right corner of the notebook\n",
+                    "- If not, go to Kernel → Change kernel → Workshop Kernel (BS Detector)"
+                ]
             },
             {
                 "cell_type": "code",
                 "execution_count": None,
                 "metadata": {},
                 "source": [
-                    "# Test imports\n",
+                    "# Verify environment variables\n",
+                    "import os\n",
+                    "\n",
+                    "print('🔍 Environment Check:')\n",
+                    "print(f\"Provider: {os.environ.get('DEFAULT_LLM_PROVIDER', 'NOT SET')}\")\n",
+                    "print(f\"Model: {os.environ.get('BEDROCK_MODEL', 'NOT SET')}\")\n",
+                    "print(f\"Region: {os.environ.get('AWS_DEFAULT_REGION', 'NOT SET')}\")\n",
+                    "\n",
+                    "if os.environ.get('DEFAULT_LLM_PROVIDER') == 'bedrock':\n",
+                    "    print('\\n✅ Environment variables are set correctly!')\n",
+                    "else:\n",
+                    "    print('\\n❌ Environment variables not set - make sure you\\'re using Workshop Kernel')"
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "source": [
+                    "# Verify packages\n",
+                    "packages_ok = True\n",
+                    "\n",
+                    "print('📦 Package Check:')\n",
+                    "for package in ['langchain', 'langgraph', 'langchain_aws', 'pydantic', 'boto3']:\n",
+                    "    try:\n",
+                    "        __import__(package.replace('-', '_'))\n",
+                    "        print(f'✅ {package}')\n",
+                    "    except ImportError:\n",
+                    "        print(f'❌ {package} - NOT INSTALLED')\n",
+                    "        packages_ok = False\n",
+                    "\n",
+                    "if packages_ok:\n",
+                    "    print('\\n✅ All packages are installed!')\n",
+                    "else:\n",
+                    "    print('\\n❌ Some packages missing - the setup script may have failed')"
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "source": [
+                    "# Test Bedrock connection\n",
+                    "print('🤖 Bedrock Connection Test:')\n",
+                    "\n",
+                    "try:\n",
+                    "    from langchain_aws import ChatBedrock\n",
+                    "    \n",
+                    "    llm = ChatBedrock(\n",
+                    "        model_id=\"anthropic.claude-3-5-haiku-20241022-v1:0\",\n",
+                    "        region_name=\"us-west-2\"\n",
+                    "    )\n",
+                    "    \n",
+                    "    response = llm.invoke(\"Say 'Workshop ready!' and nothing else.\")\n",
+                    "    print(f\"Response: {response.content}\")\n",
+                    "    print('\\n✅ Bedrock connection successful!')\n",
+                    "    \n",
+                    "except Exception as e:\n",
+                    "    print(f'❌ Bedrock connection failed: {e}')\n",
+                    "    print('\\nTroubleshooting:')\n",
+                    "    print('1. Check IAM role has bedrock:InvokeModel permission')\n",
+                    "    print('2. Verify Claude 3.5 Haiku is available in us-west-2')"
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "source": [
+                    "# Test workshop modules\n",
+                    "print('🔧 Workshop Module Test:')\n",
+                    "\n",
                     "try:\n",
                     "    from config.llm_factory import LLMFactory\n",
                     "    from modules.m1_baseline import check_claim\n",
-                    "    print('✅ Imports successful!')\n",
+                    "    \n",
+                    "    llm = LLMFactory.create_llm()\n",
+                    "    result = check_claim(\"The sky is green\", llm)\n",
+                    "    \n",
+                    "    print(f\"BS Detector result: {result}\")\n",
+                    "    print('\\n✅ Workshop modules working!')\n",
+                    "    \n",
                     "except Exception as e:\n",
-                    "    print(f'❌ Import error: {e}')"
+                    "    print(f'❌ Module test failed: {e}')\n",
+                    "    print('Make sure you\\'re in the bs_detector directory')"
                 ]
             },
             {
-                "cell_type": "code",
-                "execution_count": None,
+                "cell_type": "markdown",
                 "metadata": {},
                 "source": [
-                    "# Test Bedrock LLM\n",
-                    "try:\n",
-                    "    llm = LLMFactory.create_llm()\n",
-                    "    response = llm.invoke('What is 2+2?')\n",
-                    "    print(f'✅ Bedrock LLM working!')\n",
-                    "    print(f'Response: {response.content if hasattr(response, \"content\") else response}')\n",
-                    "except Exception as e:\n",
-                    "    print(f'❌ LLM error: {e}')"
-                ]
-            },
-            {
-                "cell_type": "code",
-                "execution_count": None,
-                "metadata": {},
-                "source": [
-                    "# Test BS Detector\n",
-                    "try:\n",
-                    "    llm = LLMFactory.create_llm()\n",
-                    "    result = check_claim('The sky is green', llm)\n",
-                    "    print(f'✅ BS Detector working!')\n",
-                    "    print(f'Result: {result}')\n",
-                    "except Exception as e:\n",
-                    "    print(f'❌ BS Detector error: {e}')"
+                    "## Next Steps\n",
+                    "\n",
+                    "If all tests passed:\n",
+                    "1. Open `notebooks/00_Setup.ipynb`\n",
+                    "2. Make sure to select **Workshop Kernel (BS Detector)** as the kernel\n",
+                    "3. Start the workshop!\n",
+                    "\n",
+                    "If any test failed, please review the error messages above."
                 ]
             }
         ],
         "metadata": {
             "kernelspec": {
-                "display_name": "Python 3",
+                "display_name": "Workshop Kernel (BS Detector)",
                 "language": "python",
-                "name": "python3"
+                "name": "workshop_kernel"
+            },
+            "language_info": {
+                "name": "python"
             }
         },
         "nbformat": 4,
         "nbformat_minor": 4
     }
     
-    with open("Test_Setup.ipynb", "w") as f:
+    with open("Verify_Setup.ipynb", "w") as f:
         json.dump(notebook_content, f, indent=2)
     
-    print("✅ Created Test_Setup.ipynb")
+    print("✅ Created Verify_Setup.ipynb")
 
 
 def main():
@@ -193,34 +223,28 @@ def main():
     print("🚀 BS Detector Workshop Setup for SageMaker")
     print("=" * 50)
     
-    # Change to the right directory
+    # Change to the bs_detector directory if it exists
     if os.path.exists("bs_detector"):
         os.chdir("bs_detector")
+        print("📁 Changed to bs_detector directory")
     
     # Install packages
-    install_requirements()
+    install_packages()
     
-    # Setup Bedrock
-    setup_bedrock_config()
+    # Create the workshop kernel
+    kernel_name = create_workshop_kernel()
     
-    # Test connection
-    bedrock_ok = test_bedrock_connection()
-    
-    # Create test notebook
-    create_test_notebook()
+    # Create verification notebook
+    create_verification_notebook()
     
     print("\n" + "=" * 50)
-    if bedrock_ok:
-        print("✅ Setup complete! You can now run the workshop notebooks.")
-        print("\nStart with:")
-        print("1. Test_Setup.ipynb - Verify everything works")
-        print("2. notebooks/00_Setup.ipynb - Begin the workshop")
-    else:
-        print("⚠️  Setup complete but Bedrock test failed.")
-        print("Please check your AWS permissions and try Test_Setup.ipynb")
-    
-    print("\n💡 Tip: The workshop uses AWS Bedrock by default.")
-    print("No API keys needed - it uses your SageMaker execution role!")
+    print("✅ Setup complete!")
+    print("\n📋 Next steps:")
+    print("1. Open Verify_Setup.ipynb")
+    print("2. Select kernel: Kernel → Change kernel → Workshop Kernel (BS Detector)")
+    print("3. Run all cells to verify setup")
+    print("4. Then open notebooks/00_Setup.ipynb to start the workshop")
+    print("\n💡 Important: Always use 'Workshop Kernel (BS Detector)' for all notebooks!")
 
 
 if __name__ == "__main__":
