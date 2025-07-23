@@ -128,7 +128,7 @@ class LLMFactory:
             os.environ.get("BEDROCK_MODEL") or 
             model or 
             settings.bedrock_model or 
-            "anthropic.claude-3-haiku-20240307-v1:0"
+            "anthropic.claude-3-5-haiku-20241022-v1:0"
         )
         
         # ChatBedrock handles the Messages API format automatically

@@ -9,7 +9,7 @@ import sys
 
 # Set environment variables
 os.environ['DEFAULT_LLM_PROVIDER'] = 'bedrock'
-os.environ['BEDROCK_MODEL'] = 'anthropic.claude-3-haiku-20240307-v1:0'
+os.environ['BEDROCK_MODEL'] = 'anthropic.claude-3-5-haiku-20241022-v1:0'
 os.environ['AWS_DEFAULT_REGION'] = 'us-west-2'
 
 # Check if packages are installed, if not, install them

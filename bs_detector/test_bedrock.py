@@ -7,7 +7,7 @@ import sys
 
 # Set environment variables
 os.environ["DEFAULT_LLM_PROVIDER"] = "bedrock"
-os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-haiku-20240307-v1:0"
+os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-5-haiku-20241022-v1:0"
 os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
 
 print("🔧 Testing Bedrock Configuration")
@@ -43,7 +43,7 @@ try:
     }
     
     response = bedrock.invoke_model(
-        modelId='anthropic.claude-3-haiku-20240307-v1:0',
+        modelId='anthropic.claude-3-5-haiku-20241022-v1:0',
         body=json.dumps(request_body),
         contentType='application/json'
     )
@@ -62,7 +62,7 @@ try:
     from langchain_aws import ChatBedrock
     
     llm = ChatBedrock(
-        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        model_id="anthropic.claude-3-5-haiku-20241022-v1:0",
         region_name="us-west-2",
         model_kwargs={"temperature": 0.7}
     )

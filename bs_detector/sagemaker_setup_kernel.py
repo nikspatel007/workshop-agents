@@ -84,7 +84,7 @@ def create_kernel_spec():
         "language": "python",
         "env": {
             "DEFAULT_LLM_PROVIDER": "bedrock",
-            "BEDROCK_MODEL": "anthropic.claude-3-haiku-20240307-v1:0",
+            "BEDROCK_MODEL": "anthropic.claude-3-5-haiku-20241022-v1:0",
             "AWS_DEFAULT_REGION": "us-west-2"
         }
     }
@@ -162,7 +162,7 @@ def create_setup_notebook():
                     "\n",
                     "# Configure Bedrock\n",
                     "os.environ['DEFAULT_LLM_PROVIDER'] = 'bedrock'\n",
-                    "os.environ['BEDROCK_MODEL'] = 'anthropic.claude-3-haiku-20240307-v1:0'\n",
+                    "os.environ['BEDROCK_MODEL'] = 'anthropic.claude-3-5-haiku-20241022-v1:0'\n",
                     "os.environ['AWS_DEFAULT_REGION'] = 'us-west-2'\n",
                     "\n",
                     "print('✅ Environment variables set')\n",

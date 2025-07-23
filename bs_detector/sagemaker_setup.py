@@ -44,7 +44,7 @@ def setup_bedrock_config():
         print("✅ Using SageMaker execution role for AWS credentials")
         
         # Set default Bedrock model - Claude 3 Haiku
-        os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-haiku-20240307-v1:0"
+        os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-5-haiku-20241022-v1:0"
         os.environ["DEFAULT_LLM_PROVIDER"] = "bedrock"
         os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
         
@@ -65,7 +65,7 @@ def setup_bedrock_config():
 DEFAULT_LLM_PROVIDER=bedrock
 
 # AWS Bedrock Configuration
-BEDROCK_MODEL=anthropic.claude-3-haiku-20240307-v1:0
+BEDROCK_MODEL=anthropic.claude-3-5-haiku-20241022-v1:0
 AWS_DEFAULT_REGION=us-west-2
 
 # Model Parameters
