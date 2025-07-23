@@ -1,6 +1,6 @@
 """
-Iteration 3: Evaluation Framework with DeepEval
-Builds on m2_langgraph.py by adding systematic evaluation capabilities.
+Iteration 4: Evaluation Framework with DeepEval
+Builds on m3_langgraph.py by adding systematic evaluation capabilities.
 """
 
 import json
@@ -17,7 +17,7 @@ from deepeval.test_case import LLMTestCase
 
 # Import our detectors from previous iterations
 from modules.m1_baseline import check_claim
-from modules.m2_langgraph import check_claim_with_graph
+from modules.m3_langgraph import check_claim_with_graph
 from config.llm_factory import LLMFactory
 
 

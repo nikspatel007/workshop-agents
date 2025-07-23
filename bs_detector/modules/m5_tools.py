@@ -1,9 +1,9 @@
 """
-Iteration 4: Tool-Enhanced Multi-Agent BS Detector
-Builds on m3_routing.py by adding web search tools to the current events expert
+Iteration 5: Tool-Enhanced Multi-Agent BS Detector
+Builds on m5_routing.py by adding web search tools to the current events expert
 
 Key features:
-- Extends the multi-agent system from m3
+- Extends the multi-agent system from m5
 - Adds tools specifically to the current_events_expert
 - Other experts remain unchanged
 - LLM decides when to use tools based on information sufficiency
@@ -20,7 +20,7 @@ from datetime import datetime
 
 from config.llm_factory import LLMFactory
 from tools.search_tool import WebSearchTool
-from modules.m3_routing import (
+from modules.m5_routing import (
     MultiAgentState,
     router_node,
     technical_expert_node,

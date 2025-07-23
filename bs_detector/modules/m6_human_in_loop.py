@@ -1,5 +1,5 @@
 """
-Iteration 5: Human-in-the-Loop Integration
+Iteration 6: Human-in-the-Loop Integration
 
 This module adds human review capabilities to our BS detector for cases where:
 1. Confidence is very low (<50%)
@@ -21,12 +21,12 @@ from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 import asyncio
 import time
 
-from modules.m4_tools import (
+from modules.m5_tools import (
     ToolEnhancedState,
     create_tool_enhanced_bs_detector,
     current_events_expert_with_tools_node
 )
-from modules.m3_routing import (
+from modules.m5_routing import (
     router_node,
     technical_expert_node,
     historical_expert_node,

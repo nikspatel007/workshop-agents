@@ -169,7 +169,7 @@ class LLMFactory:
         
         # Get model from settings or use the one currently loaded in LM Studio
         # LM Studio will use whatever model is currently loaded if not specified
-        model_name = model or getattr(settings, 'lmstudio_model', None) or "lmstudio-model"
+        model_name = model or getattr(settings, 'lmstudio_model', None) or "phi-4"
         
         return ChatOpenAI(
             base_url=base_url,
