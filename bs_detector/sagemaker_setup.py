@@ -43,10 +43,10 @@ def setup_bedrock_config():
         # SageMaker provides AWS credentials automatically via IAM role
         print("✅ Using SageMaker execution role for AWS credentials")
         
-        # Set default Bedrock model
-        os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-sonnet-20240229-v1:0"
+        # Set default Bedrock model - Claude 3 Haiku
+        os.environ["BEDROCK_MODEL"] = "anthropic.claude-3-haiku-20240307-v1:0"
         os.environ["DEFAULT_LLM_PROVIDER"] = "bedrock"
-        os.environ["AWS_DEFAULT_REGION"] = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+        os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
         
     else:
         print("⚠️  Not running in SageMaker - manual AWS configuration needed")
@@ -65,8 +65,8 @@ def setup_bedrock_config():
 DEFAULT_LLM_PROVIDER=bedrock
 
 # AWS Bedrock Configuration
-BEDROCK_MODEL=anthropic.claude-3-sonnet-20240229-v1:0
-AWS_DEFAULT_REGION={os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')}
+BEDROCK_MODEL=anthropic.claude-3-haiku-20240307-v1:0
+AWS_DEFAULT_REGION=us-west-2
 
 # Model Parameters
 LLM_TEMPERATURE=0.7

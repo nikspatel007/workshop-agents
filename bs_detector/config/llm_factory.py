@@ -101,11 +101,18 @@ class LLMFactory:
     def _create_bedrock(model: Optional[str], **kwargs):
         """Create AWS Bedrock LLM instance"""
         from langchain_aws import ChatBedrock
+        import os
+        import boto3
         
-        if not (settings.aws_access_key_id and settings.aws_secret_access_key):
+        # Check if we're in SageMaker (IAM role auth) or local (explicit creds)
+        if os.path.exists("/opt/ml"):
+            # In SageMaker - use IAM role, no explicit credentials needed
+            print("Using SageMaker IAM role for Bedrock authentication")
+        elif not (settings.aws_access_key_id and settings.aws_secret_access_key):
+            # Not in SageMaker and no credentials
             raise EnvironmentError(
-                "AWS credentials not found. Please set AWS_ACCESS_KEY_ID and "
-                "AWS_SECRET_ACCESS_KEY in .env file."
+                "AWS credentials not found. In SageMaker, IAM role is used automatically. "
+                "For local development, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY."
             )
         
         # Extract temperature if provided in kwargs
@@ -113,9 +120,20 @@ class LLMFactory:
         model_kwargs = kwargs.pop("model_kwargs", {})
         model_kwargs["temperature"] = temperature
         
+        # Set region - use environment variable, settings, or default
+        region = os.environ.get("AWS_DEFAULT_REGION") or settings.aws_region or "us-west-2"
+        
+        # Set model - use environment variable, parameter, settings, or default
+        model_id = (
+            os.environ.get("BEDROCK_MODEL") or 
+            model or 
+            settings.bedrock_model or 
+            "anthropic.claude-3-haiku-20240307-v1:0"
+        )
+        
         return ChatBedrock(
-            model_id=model or settings.bedrock_model,
-            region_name=settings.aws_region,
+            model_id=model_id,
+            region_name=region,
             model_kwargs=model_kwargs,
             **kwargs
         )
