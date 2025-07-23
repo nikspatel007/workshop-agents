@@ -147,22 +147,27 @@ def uncertainty_detector_node(state: HumanInLoopState) -> dict:
     updates = {"uncertainty_score": uncertainty}
     review_reasons = []
     
-    # Check various conditions for human review
-    if state.confidence and state.confidence < 50:
-        review_reasons.append(f"Very low confidence: {state.confidence}%")
-    
-    if state.expert_disagreement:
-        review_reasons.append("Experts disagree on verdict")
-    
-    if uncertainty > 0.6:
-        review_reasons.append(f"High uncertainty score: {uncertainty:.2f}")
-    
-    if state.claim_type == "current_event" and state.search_performed:
-        if not state.search_results or all(not r for r in state.search_results):
-            review_reasons.append("No evidence found for recent event")
-    
-    # Determine if human review is needed
-    needs_review = len(review_reasons) > 0 or uncertainty > 0.6
+    # Check if forced review
+    if hasattr(state, '_force_human_review') and state._force_human_review:
+        review_reasons.append("Human review explicitly requested")
+        needs_review = True
+    else:
+        # Check various conditions for human review
+        if state.confidence and state.confidence < 50:
+            review_reasons.append(f"Very low confidence: {state.confidence}%")
+        
+        if state.expert_disagreement:
+            review_reasons.append("Experts disagree on verdict")
+        
+        if uncertainty > 0.6:
+            review_reasons.append(f"High uncertainty score: {uncertainty:.2f}")
+        
+        if state.claim_type == "current_event" and state.search_performed:
+            if not state.search_results or all(not r for r in state.search_results):
+                review_reasons.append("No evidence found for recent event")
+        
+        # Determine if human review is needed
+        needs_review = len(review_reasons) > 0 or uncertainty > 0.6
     
     if needs_review:
         # Create human review request
@@ -209,21 +214,34 @@ def human_review_node(state: HumanInLoopState) -> dict:
             if feedback.additional_context:
                 updates["reasoning"] += f" Context: {feedback.additional_context}"
     else:
-        # Simulate human feedback for demo
-        print("\n⏳ Waiting for human review... (simulated)")
-        time.sleep(1)
+        # No handler provided - use interactive input
+        print("\n🧑 HUMAN REVIEW REQUIRED")
+        print("The AI needs your help to verify this claim.")
         
-        # Simulated human decision
-        simulated_feedback = HumanFeedback(
-            verdict="UNCERTAIN",
-            confidence=60,
-            reasoning="This claim requires expert verification beyond my knowledge"
-        )
-        
-        updates["human_feedback"] = simulated_feedback
-        updates["verdict"] = simulated_feedback.verdict
-        updates["confidence"] = simulated_feedback.confidence
-        updates["reasoning"] = f"Human review: {simulated_feedback.reasoning}"
+        # Try to use interactive input
+        try:
+            feedback = interactive_human_input(state.human_review_request)
+            updates["human_feedback"] = feedback
+            updates["verdict"] = feedback.verdict
+            updates["confidence"] = feedback.confidence
+            updates["reasoning"] = f"Human review: {feedback.reasoning}"
+            if feedback.additional_context:
+                updates["reasoning"] += f" Context: {feedback.additional_context}"
+        except (EOFError, KeyboardInterrupt):
+            # Fallback to simulated if interactive not available
+            print("\n⏳ Interactive input not available, using simulated feedback...")
+            time.sleep(1)
+            
+            simulated_feedback = HumanFeedback(
+                verdict="UNCERTAIN",
+                confidence=60,
+                reasoning="This claim requires expert verification beyond my knowledge"
+            )
+            
+            updates["human_feedback"] = simulated_feedback
+            updates["verdict"] = simulated_feedback.verdict
+            updates["confidence"] = simulated_feedback.confidence
+            updates["reasoning"] = f"Human review: {simulated_feedback.reasoning}"
     
     return updates
 
@@ -363,9 +381,16 @@ def create_human_in_loop_bs_detector():
 
 def check_claim_with_human_in_loop(
     claim: str, 
-    human_input_handler: Optional[Callable] = None
+    human_input_handler: Optional[Callable] = None,
+    force_human_review: bool = False
 ) -> dict:
-    """Check a claim with human-in-the-loop support"""
+    """Check a claim with human-in-the-loop support
+    
+    Args:
+        claim: The claim to check
+        human_input_handler: Optional handler for human input
+        force_human_review: Force human review regardless of confidence
+    """
     try:
         app = create_human_in_loop_bs_detector()
         
@@ -374,6 +399,10 @@ def check_claim_with_human_in_loop(
         # Attach human input handler if provided
         if human_input_handler:
             initial_state._human_input_handler = human_input_handler
+            
+        # Force human review if requested
+        if force_human_review:
+            initial_state._force_human_review = True
         
         final_state = app.invoke(initial_state)
         
@@ -391,7 +420,8 @@ def check_claim_with_human_in_loop(
             "used_search": final_state.get("search_performed", False),
             "tools_used": final_state.get("tools_used", []),
             "human_reviewed": final_state.get("needs_human_review", False),
-            "uncertainty_score": final_state.get("uncertainty_score", 0.0)
+            "uncertainty_score": final_state.get("uncertainty_score", 0.0),
+            "human_feedback": final_state.get("human_feedback")
         }
     except Exception as e:
         import traceback

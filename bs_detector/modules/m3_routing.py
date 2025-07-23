@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 
 from config.llm_factory import LLMFactory
+from modules.node_updates import RouterUpdate, ExpertUpdate
 
 
 class MultiAgentState(BaseModel):
@@ -39,66 +40,55 @@ class MultiAgentState(BaseModel):
 def router_node(state: MultiAgentState) -> dict:
     """
     Router that analyzes the claim and decides which specialist to use
+    Returns a dict that can be used to update the state
     """
     try:
         llm = LLMFactory.create_llm()
         
+        # Create structured LLM for router
+        structured_llm = llm.with_structured_output(RouterUpdate)
+        
         router_prompt = """You are a routing expert that analyzes claims and determines which specialist should handle them.
 
-Analyze the given claim and respond with:
-1. CLAIM_TYPE: One of [technical, historical, current_event, general]
-2. CONFIDENCE_LEVEL: One of [high, medium, low] based on how certain you are
+Analyze the given claim and determine:
+1. claim_type: One of [technical, historical, current_event, general]
+2. confidence_level: One of [high, medium, low] based on how certain you are
 
 Categories:
 - technical: Claims about technology, specifications, capabilities
 - historical: Claims about past events, dates, historical facts
 - current_event: Claims about recent or ongoing events (use when temporal context suggests recency)
-- general: Everything else
-
-Respond in this format:
-CLAIM_TYPE: [type]
-CONFIDENCE_LEVEL: [level]
-"""
+- general: Everything else"""
         
         messages = [
             SystemMessage(content=router_prompt),
             HumanMessage(content=f'Route this claim: "{state.claim}"')
         ]
         
-        response = llm.invoke(messages)
-        content = response.content
+        # Get structured response
+        router_update = structured_llm.invoke(messages)
         
-        # Parse response
-        claim_type = "general"
-        confidence_level = "medium"
+        # Convert Pydantic model to dict for state update
+        return router_update.model_dump()
         
-        if "CLAIM_TYPE:" in content:
-            type_line = content.split("CLAIM_TYPE:")[1].split("\n")[0].strip().lower()
-            if type_line in ["technical", "historical", "current_event", "general"]:
-                claim_type = type_line
-        
-        if "CONFIDENCE_LEVEL:" in content:
-            conf_line = content.split("CONFIDENCE_LEVEL:")[1].split("\n")[0].strip().lower()
-            if conf_line in ["high", "medium", "low"]:
-                confidence_level = conf_line
-        
-        return {
-            "claim_type": claim_type,
-            "confidence_level": confidence_level
-        }
     except Exception as e:
-        # Default to general expert on error
-        return {
-            "claim_type": "general",
-            "confidence_level": "medium"
-        }
+        # Default to general expert on error - return dict
+        default_update = RouterUpdate(
+            claim_type="general",
+            confidence_level="medium"
+        )
+        return default_update.model_dump()
 
 
 def technical_expert_node(state: MultiAgentState) -> dict:
     """
     Technical expert for technology-related claims
+    Returns a dict for state update
     """
     llm = LLMFactory.create_llm()
+    
+    # Create structured LLM for expert analysis
+    structured_llm = llm.with_structured_output(ExpertUpdate)
     
     expert_prompt = """You are a technical expert specializing in technology, engineering, and scientific claims.
     
@@ -107,21 +97,25 @@ Analyze this claim for technical accuracy. You have deep knowledge of:
 - Technology limitations and possibilities
 - Scientific principles and facts
 
-Determine if the claim is LEGITIMATE or BS.
-
-Provide your analysis in this format:
-VERDICT: [LEGITIMATE/BS]
-CONFIDENCE: [0-100]
-REASONING: [Your technical analysis]
-"""
+Determine if the claim is LEGITIMATE, BS, or UNCERTAIN.
+Provide your confidence (0-100) and detailed reasoning."""
     
     messages = [
         SystemMessage(content=expert_prompt),
         HumanMessage(content=f'Analyze this technical claim: "{state.claim}"')
     ]
     
-    response = llm.invoke(messages)
-    return _parse_expert_response(response.content, "Technical Expert")
+    try:
+        # Get structured response
+        expert_update = structured_llm.invoke(messages)
+        # Add the expert name
+        update_dict = expert_update.model_dump()
+        update_dict["analyzing_agent"] = "Technical Expert"
+        return update_dict
+    except Exception as e:
+        # Fallback to parsing if structured output fails
+        response = llm.invoke(messages)
+        return _parse_expert_response(response.content, "Technical Expert")
 
 
 def historical_expert_node(state: MultiAgentState) -> dict:
@@ -209,6 +203,34 @@ REASONING: [Your analysis]
     
     response = llm.invoke(messages)
     return _parse_expert_response(response.content, "General Expert")
+
+
+def _create_expert_node(expert_name: str, expert_prompt: str):
+    """Factory function to create expert nodes with structured output"""
+    def expert_node(state: MultiAgentState) -> dict:
+        llm = LLMFactory.create_llm()
+        
+        # Create structured LLM for expert analysis
+        structured_llm = llm.with_structured_output(ExpertUpdate)
+        
+        messages = [
+            SystemMessage(content=expert_prompt),
+            HumanMessage(content=f'Analyze this claim: "{state.claim}"')
+        ]
+        
+        try:
+            # Get structured response
+            expert_update = structured_llm.invoke(messages)
+            # Add the expert name
+            update_dict = expert_update.model_dump()
+            update_dict["analyzing_agent"] = expert_name
+            return update_dict
+        except Exception as e:
+            # Fallback to parsing if structured output fails
+            response = llm.invoke(messages)
+            return _parse_expert_response(response.content, expert_name)
+    
+    return expert_node
 
 
 def _parse_expert_response(content: str, expert_name: str) -> dict:
