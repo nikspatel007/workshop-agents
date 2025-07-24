@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import Mock, patch
 import numpy as np
 
-from modules.m3_production_evaluation import (
+from modules.m4_production_evaluation import (
     ProductionEvaluator,
     ProductionMetrics,
     LLMJudge,
@@ -19,7 +19,7 @@ from modules.m3_production_evaluation import (
 class TestLLMJudge:
     """Test LLM-as-judge functionality"""
     
-    @patch('modules.m3_production_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_production_evaluation.LLMFactory.create_llm')
     def test_evaluate_reasoning_quality(self, mock_llm):
         """Test reasoning quality evaluation"""
         # Mock LLM response
@@ -37,7 +37,7 @@ class TestLLMJudge:
         assert score == 0.8
         assert 0 <= score <= 1
     
-    @patch('modules.m3_production_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_production_evaluation.LLMFactory.create_llm')
     def test_evaluate_claim_plausibility(self, mock_llm):
         """Test claim plausibility evaluation"""
         mock_response = Mock()
@@ -52,7 +52,7 @@ class TestLLMJudge:
         
         assert score == 0.9
     
-    @patch('modules.m3_production_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_production_evaluation.LLMFactory.create_llm')
     def test_llm_judge_error_handling(self, mock_llm):
         """Test error handling returns default score"""
         mock_llm.return_value.invoke.side_effect = Exception("LLM error")
@@ -165,7 +165,7 @@ class TestDriftDetector:
 class TestProductionEvaluator:
     """Test main production evaluator"""
     
-    @patch('modules.m3_production_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_production_evaluation.LLMFactory.create_llm')
     def test_evaluate_without_ground_truth(self, mock_llm):
         """Test evaluation without ground truth"""
         # Mock LLM responses
@@ -237,7 +237,7 @@ class TestProductionEvaluator:
         )
         assert verbose_efficiency <= 0.5
     
-    @patch('modules.m3_production_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_production_evaluation.LLMFactory.create_llm')
     def test_human_review_triggers(self, mock_llm):
         """Test conditions that trigger human review"""
         mock_response = Mock()

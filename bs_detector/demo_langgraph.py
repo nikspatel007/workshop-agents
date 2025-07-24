@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from modules.m1_baseline import check_claim
-from modules.m2_langgraph import (
+from modules.m3_langgraph import (
     check_claim_with_graph,
     interactive_chat,
     visualize_graph

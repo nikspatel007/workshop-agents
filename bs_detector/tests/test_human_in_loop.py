@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import Mock, patch
 from datetime import datetime
 
-from modules.m5_human_in_loop import (
+from modules.m6_human_in_loop_simple import (
     HumanReviewRequest,
     HumanFeedback,
     HumanInLoopState,
@@ -233,7 +233,7 @@ class TestGraphIntegration:
         for node in expected_nodes:
             assert node in nodes
     
-    @patch('modules.m5_human_in_loop.LLMFactory.create_llm')
+    @patch('modules.m6_human_in_loop.LLMFactory.create_llm')
     def test_high_confidence_claim_no_review(self, mock_llm):
         """Test that high confidence claims don't trigger review"""
         # Mock LLM responses
@@ -256,7 +256,7 @@ class TestGraphIntegration:
         assert result["confidence"] == 95
         assert result["human_reviewed"] == False
     
-    @patch('modules.m5_human_in_loop.LLMFactory.create_llm')
+    @patch('modules.m6_human_in_loop.LLMFactory.create_llm')
     @patch('time.sleep')
     def test_low_confidence_triggers_review(self, mock_sleep, mock_llm):
         """Test that low confidence triggers human review"""

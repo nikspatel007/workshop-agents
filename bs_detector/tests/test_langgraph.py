@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from modules.m2_langgraph import (
+from modules.m3_langgraph import (
     BSDetectorState,
     detect_bs_node,
     retry_node,
@@ -102,7 +102,7 @@ class TestGraphExecution:
         graph_def = graph.get_graph()
         assert graph_def is not None
     
-    @patch('modules.m2_langgraph.check_claim')
+    @patch('modules.m3_langgraph.check_claim')
     def test_successful_detection(self, mock_check_claim):
         """Test successful claim detection"""
         # Mock the baseline check_claim to return a successful result
@@ -119,7 +119,7 @@ class TestGraphExecution:
         assert result["confidence"] == 95
         assert "error" not in result
     
-    @patch('modules.m2_langgraph.check_claim')
+    @patch('modules.m3_langgraph.check_claim')
     def test_retry_on_error(self, mock_check_claim):
         """Test that graph retries on error"""
         # Mock check_claim to fail once then succeed

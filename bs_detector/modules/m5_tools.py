@@ -9,7 +9,7 @@ Key features:
 - LLM decides when to use tools based on information sufficiency
 """
 
-from typing import List, Optional, Literal
+from typing import List, Optional
 from pydantic import BaseModel, Field
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver

@@ -145,7 +145,7 @@ import os
 os.environ["DEFAULT_LLM_PROVIDER"] = "lmstudio"
 
 # Now all LLM calls will use LM Studio
-from modules.m5_human_in_loop_v2 import check_claim_with_human_review_v2
+from modules.m6_human_in_loop_simple import check_claim_with_human_review
 
 result = check_claim_with_human_review_v2(
     "The International Space Station orbits Earth"

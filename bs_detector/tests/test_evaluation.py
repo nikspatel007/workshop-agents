@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 import json
 
-from modules.m3_evaluation import (
+from modules.m4_evaluation import (
     AviationClaim,
     EvaluationResult,
     BSDetectionAccuracy,
@@ -133,7 +133,7 @@ class TestCustomMetrics:
         assert score_bad < 0.5
         assert not metric.is_successful()
     
-    @patch('modules.m3_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_evaluation.LLMFactory.create_llm')
     def test_reasoning_quality_metric(self, mock_llm):
         """Test reasoning quality metric"""
         # Mock LLM response
@@ -211,7 +211,7 @@ class TestBSDetectorEvaluator:
         assert evaluator.claims[0].id == "test_001"
         assert evaluator.claims[1].verdict == "BS"
     
-    @patch('modules.m3_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_evaluation.LLMFactory.create_llm')
     def test_evaluate_detector(self, mock_llm, evaluator):
         """Test evaluating a detector"""
         # Mock detector function
@@ -258,7 +258,7 @@ class TestBSDetectorEvaluator:
         assert result.correct == 1
         assert result.accuracy == 1.0
     
-    @patch('modules.m3_evaluation.LLMFactory.create_llm')
+    @patch('modules.m4_evaluation.LLMFactory.create_llm')
     def test_run_deepeval_tests(self, mock_llm, evaluator, capsys):
         """Test running DeepEval tests"""
         # Mock detector
@@ -331,7 +331,7 @@ class TestBSDetectorEvaluator:
 class TestConvenienceFunctions:
     """Test convenience functions"""
     
-    @patch('modules.m3_evaluation.BSDetectorEvaluator')
+    @patch('modules.m4_evaluation.BSDetectorEvaluator')
     def test_evaluate_baseline(self, mock_evaluator_class):
         """Test evaluate_baseline function"""
         mock_evaluator = Mock()
@@ -348,7 +348,7 @@ class TestConvenienceFunctions:
         call_args = mock_evaluator.evaluate_detector.call_args
         assert "Baseline" in call_args[0][1]
     
-    @patch('modules.m3_evaluation.BSDetectorEvaluator')
+    @patch('modules.m4_evaluation.BSDetectorEvaluator')
     def test_evaluate_langgraph(self, mock_evaluator_class):
         """Test evaluate_langgraph function"""
         mock_evaluator = Mock()
@@ -365,7 +365,7 @@ class TestConvenienceFunctions:
         call_args = mock_evaluator.evaluate_detector.call_args
         assert "LangGraph" in call_args[0][1]
     
-    @patch('modules.m3_evaluation.BSDetectorEvaluator')
+    @patch('modules.m4_evaluation.BSDetectorEvaluator')
     def test_compare_all_iterations(self, mock_evaluator_class):
         """Test compare_all_iterations function"""
         mock_evaluator = Mock()

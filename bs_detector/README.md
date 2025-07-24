@@ -68,8 +68,9 @@ Automatically detects and configures for:
 ## Workshop Progress
 - [x] Iteration 0: Environment & LLM Setup
 - [ ] Iteration 1: Simple BS Detector
-- [ ] Iteration 2: Structured Agent
-- [ ] Iteration 3: Multi-Claim Extraction
-- [ ] Iteration 4: Evidence-Based Checking
-- [ ] Iteration 5: Human-in-the-Loop
-- [ ] Iteration 6: Full Orchestration
+- [ ] Iteration 2: Prompt Engineering
+- [ ] Iteration 3: LangGraph Integration
+- [ ] Iteration 4: Evaluation Framework
+- [ ] Iteration 5: Tools & Evidence
+- [ ] Iteration 6: Human-in-the-Loop
+- [ ] Iteration 7: Memory Enhancement

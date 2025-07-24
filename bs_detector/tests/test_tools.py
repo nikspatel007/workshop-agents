@@ -7,7 +7,7 @@ import json
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, List
 
-from modules.m4_tools import (
+from modules.m5_tools import (
     ToolEnhancedState,
     WebSearchResult,
     search_for_information,
@@ -15,7 +15,7 @@ from modules.m4_tools import (
     create_tool_enhanced_bs_detector,
     check_claim_with_tools
 )
-from modules.m3_routing import (
+from modules.m5_routing import (
     MultiAgentState,
     router_node,
     technical_expert_node,
@@ -103,7 +103,7 @@ class TestSearchTool:
 class TestMultiAgentRouting:
     """Test multi-agent routing system"""
     
-    @patch('modules.m3_routing.LLMFactory.create_llm')
+    @patch('modules.m5_routing.LLMFactory.create_llm')
     def test_router_node(self, mock_llm):
         """Test router correctly classifies claims"""
         # Mock LLM response for technical claim
@@ -117,7 +117,7 @@ class TestMultiAgentRouting:
         assert result["claim_type"] == "technical"
         assert result["confidence_level"] == "high"
     
-    @patch('modules.m3_routing.LLMFactory.create_llm')
+    @patch('modules.m5_routing.LLMFactory.create_llm')
     def test_router_current_events(self, mock_llm):
         """Test router identifies current events"""
         mock_response = Mock()
@@ -133,7 +133,7 @@ class TestMultiAgentRouting:
 class TestToolIntegration:
     """Test tool integration with current events expert"""
     
-    @patch('modules.m4_tools.WebSearchTool')
+    @patch('modules.m5_tools.WebSearchTool')
     def test_search_for_information_tool(self, mock_tool_class):
         """Test the search_for_information tool function"""
         # Mock search tool
@@ -153,7 +153,7 @@ class TestToolIntegration:
         assert result_data["search_successful"] == True
         assert len(result_data["facts"]) == 2
     
-    @patch('modules.m4_tools.LLMFactory.create_llm')
+    @patch('modules.m5_tools.LLMFactory.create_llm')
     def test_current_events_expert_no_tools(self, mock_llm):
         """Test current events expert when tools not needed"""
         # Mock LLM without tool calls
@@ -173,8 +173,8 @@ class TestToolIntegration:
         assert result["search_performed"] == False
         assert result["tools_used"] == []
     
-    @patch('modules.m4_tools.LLMFactory.create_llm')
-    @patch('modules.m4_tools.search_for_information')
+    @patch('modules.m5_tools.LLMFactory.create_llm')
+    @patch('modules.m5_tools.search_for_information')
     def test_current_events_expert_with_tools(self, mock_search_tool, mock_llm):
         """Test current events expert using tools"""
         # Mock tool call
@@ -257,7 +257,7 @@ class TestGraphStructure:
 class TestErrorHandling:
     """Test error handling in multi-agent system"""
     
-    @patch('modules.m3_routing.LLMFactory.create_llm')
+    @patch('modules.m5_routing.LLMFactory.create_llm')
     def test_router_error_defaults_to_general(self, mock_llm):
         """Test router defaults to general on error"""
         mock_llm.return_value.invoke.side_effect = Exception("LLM error")
@@ -269,7 +269,7 @@ class TestErrorHandling:
         assert result["claim_type"] == "general"
         assert result["confidence_level"] == "medium"
     
-    @patch('modules.m4_tools.WebSearchTool')
+    @patch('modules.m5_tools.WebSearchTool')
     def test_search_tool_error_handling(self, mock_tool_class):
         """Test search tool handles errors gracefully"""
         mock_tool = Mock()

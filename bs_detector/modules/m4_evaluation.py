@@ -11,7 +11,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 import pandas as pd
-from deepeval import assert_test
 from deepeval.metrics import BaseMetric
 from deepeval.test_case import LLMTestCase
 

@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from datetime import datetime
 import numpy as np
 from pydantic import BaseModel, Field
-import json
-from pathlib import Path
 
 from config.llm_factory import LLMFactory
 
@@ -484,7 +482,7 @@ def evaluate_unknown_claim(claim: str, bs_detector):
 
 if __name__ == "__main__":
     # Demo the production evaluator
-    from modules.m2_langgraph import check_claim_with_graph
+    from modules.m3_langgraph import check_claim_with_graph
     
     print("Production Evaluation Demo")
     print("=" * 50)
