@@ -2,7 +2,20 @@
 
 ## Overview
 
-Model Context Protocol (MCP) is an open protocol that standardizes how AI assistants connect to external data sources and tools. Think of it as "USB for AI" - a universal standard that lets any AI system work with any tool or data source.
+Model Context Protocol (MCP) is an open protocol announced by Anthropic in November 2024 that standardizes how AI assistants connect to external data sources and tools. Think of it as "USB-C for AI" - a universal standard that provides a consistent way for AI models to access and interact with different data sources and tools.
+
+**Official Resources:**
+- [MCP Announcement](https://www.anthropic.com/news/model-context-protocol)
+- [Official Documentation](https://docs.anthropic.com/en/docs/mcp)
+- [GitHub Repository](https://github.com/modelcontextprotocol)
+
+## Key Announcement Details
+
+MCP was open-sourced by Anthropic with:
+- SDKs in Python, TypeScript, C# (with Microsoft), and Java
+- Pre-built servers for Google Drive, Slack, GitHub, Git, Postgres, Puppeteer, and Stripe
+- Support in Claude Desktop app for all Claude.ai plans
+- Early adopters including Block, Apollo, Zed, Replit, Codeium, and Sourcegraph
 
 ## Table of Contents
 1. [What is MCP?](#what-is-mcp)
@@ -597,13 +610,186 @@ mcp install filesystem
 mcp configure filesystem
 ```
 
+## MCP vs Google's A2A Protocol
+
+### Understanding the Two-Layer Stack
+
+In 2024-2025, two major protocols emerged to address different layers of AI agent architecture:
+
+```mermaid
+graph TD
+    subgraph "Agent Communication Layer"
+        A[Google A2A Protocol]
+        B[Agent ↔ Agent]
+    end
+    
+    subgraph "Tool Integration Layer"
+        C[Anthropic MCP]
+        D[Agent ↔ Tools/Data]
+    end
+    
+    E[AI Agent 1] --> A
+    F[AI Agent 2] --> A
+    
+    E --> C
+    C --> G[Databases]
+    C --> H[APIs]
+    C --> I[File Systems]
+    
+    style A fill:#4285f4,stroke:#333,stroke-width:2px
+    style C fill:#d4a373,stroke:#333,stroke-width:2px
+```
+
+### Key Differences
+
+| Aspect | MCP (Anthropic) | A2A (Google) |
+|--------|-----------------|--------------|
+| **Announced** | November 2024 | April 2025 |
+| **Primary Focus** | Agent ↔ Tools/Data | Agent ↔ Agent |
+| **Purpose** | Standardize tool access | Enable agent collaboration |
+| **Communication** | Client-server model | Peer-to-peer agents |
+| **Key Feature** | Universal tool interface | Agent discovery & negotiation |
+| **Supported By** | Anthropic, Microsoft | Google, 50+ partners |
+
+### MCP: The Tool Layer
+
+MCP focuses on **how agents access external resources**:
+
+```mermaid
+graph LR
+    A[Claude/GPT/Any LLM] --> B[MCP Client]
+    B --> C[MCP Protocol]
+    C --> D[File System Server]
+    C --> E[Database Server]
+    C --> F[API Server]
+    
+    style B fill:#d4a373,stroke:#333,stroke-width:2px
+```
+
+**MCP Strengths:**
+- Standardized tool interfaces
+- Pre-built integrations
+- Resource management
+- Secure data access
+
+### A2A: The Communication Layer
+
+A2A focuses on **how agents communicate with each other**:
+
+```mermaid
+graph TD
+    A[Client Agent] --> B[A2A Protocol]
+    B --> C[Remote Agent 1]
+    B --> D[Remote Agent 2]
+    B --> E[Remote Agent 3]
+    
+    F[Agent Discovery] --> G[Agent Cards]
+    G --> H[Capability Matching]
+    H --> I[Task Delegation]
+    
+    style B fill:#4285f4,stroke:#333,stroke-width:2px
+```
+
+**A2A Strengths:**
+- Agent discovery mechanism
+- Task delegation
+- Multi-modal support (text, audio, video)
+- UI capability negotiation
+
+### Complementary Architecture
+
+The protocols are designed to work together:
+
+```mermaid
+graph TD
+    subgraph "Enterprise AI System"
+        A[User Request] --> B[Primary Agent]
+        
+        B --> C{Need External Data?}
+        C -->|Yes| D[MCP Layer]
+        D --> E[Access Tools/Data]
+        
+        B --> F{Need Other Agents?}
+        F -->|Yes| G[A2A Layer]
+        G --> H[Collaborate with Agents]
+        
+        E --> I[Combined Result]
+        H --> I
+        I --> J[User Response]
+    end
+    
+    style D fill:#d4a373,stroke:#333,stroke-width:2px
+    style G fill:#4285f4,stroke:#333,stroke-width:2px
+```
+
+### Real-World Example
+
+Consider a complex enterprise task:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Agent1 as Sales Agent
+    participant MCP as MCP Server (CRM)
+    participant Agent2 as Finance Agent (via A2A)
+    
+    User->>Agent1: Generate Q4 revenue report
+    
+    Agent1->>MCP: Query sales data
+    MCP-->>Agent1: Sales figures
+    
+    Agent1->>Agent2: Request financial analysis (A2A)
+    Note over Agent1,Agent2: A2A Protocol negotiation
+    
+    Agent2->>Agent2: Analyze data
+    Agent2-->>Agent1: Financial insights
+    
+    Agent1->>User: Complete Q4 report
+```
+
+### When to Use Each
+
+**Use MCP when:**
+- Connecting to databases, APIs, or file systems
+- Standardizing tool access across agents
+- Managing resources and permissions
+- Building reusable tool servers
+
+**Use A2A when:**
+- Orchestrating multiple specialized agents
+- Building collaborative AI systems
+- Enabling cross-platform agent communication
+- Creating agent marketplaces
+
+### The Future: Integrated Stack
+
+```mermaid
+graph TD
+    A[Future AI Applications] --> B[Agent Layer]
+    B --> C[A2A: Agent Coordination]
+    B --> D[MCP: Tool Access]
+    
+    C --> E[Agent Ecosystem]
+    D --> F[Tool Ecosystem]
+    
+    E --> G[Unified AI Platform]
+    F --> G
+    
+    style C fill:#4285f4,stroke:#333,stroke-width:2px
+    style D fill:#d4a373,stroke:#333,stroke-width:2px
+    style G fill:#90EE90,stroke:#333,stroke-width:4px
+```
+
 ## Conclusion
 
-MCP represents a paradigm shift in how AI systems interact with the world:
+MCP and A2A represent complementary pieces of the AI infrastructure puzzle:
 
-- 🔓 **Open Protocol** - Not locked to any vendor
-- 🚀 **Scalable** - Add capabilities without changing AI
-- 🛡️ **Secure** - Built-in security model
-- 🤝 **Interoperable** - Any AI can use any MCP server
+- **MCP** (Anthropic): Solves the "last mile" problem of connecting AI to data and tools
+- **A2A** (Google): Enables the "agent economy" where specialized agents collaborate
 
-The future of AI isn't just about better models - it's about better connections to the world's data and tools. MCP makes that future possible today.
+Together, they form the foundation for a new era of AI applications where:
+- 🔌 **MCP** provides universal access to resources
+- 🤝 **A2A** enables seamless agent collaboration
+- 🚀 **Combined** they create limitless possibilities
+
+The future of AI isn't just about better models - it's about better connections. MCP connects agents to the world's tools and data, while A2A connects agents to each other. This two-layer approach promises to unlock the full potential of AI agents in enterprise and consumer applications.
