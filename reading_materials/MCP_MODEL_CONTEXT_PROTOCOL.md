@@ -2,7 +2,7 @@
 
 ## Overview
 
-Model Context Protocol (MCP) is an open protocol announced by Anthropic in November 2024 that standardizes how AI assistants connect to external data sources and tools. Think of it as "USB-C for AI" - a universal standard that provides a consistent way for AI models to access and interact with different data sources and tools.
+Model Context Protocol (MCP) is an open protocol announced by Anthropic in November 2024 that standardizes how applications provide context to LLMs. As described in the official documentation, MCP is like a "USB-C port for AI applications" - a universal standard that allows any AI system to connect with any data source or tool through a consistent interface.
 
 **Official Resources:**
 - [MCP Announcement](https://www.anthropic.com/news/model-context-protocol)
@@ -53,48 +53,70 @@ graph TD
 
 ## Architecture Overview
 
-### The MCP Stack
+### Official MCP Architecture
+
+Based on the official documentation, MCP follows a client-server architecture with five core components:
 
 ```mermaid
 graph TD
-    subgraph "AI Application Layer"
-        A[AI Model/Assistant]
-        B[MCP Client]
+    subgraph "MCP Hosts"
+        A[Claude Desktop]
+        B[VS Code]
+        C[Your Application]
     end
     
-    subgraph "Protocol Layer"
-        C[JSON-RPC 2.0]
-        D[Transport<br/>stdio/SSE]
+    subgraph "MCP Clients"
+        D[Client 1]
+        E[Client 2]
+        F[Client 3]
     end
     
-    subgraph "Server Layer"
-        E[MCP Server 1]
-        F[MCP Server 2]
-        G[MCP Server N]
+    subgraph "MCP Servers"
+        G[File System Server]
+        H[Database Server]
+        I[API Server]
+        J[Custom Server]
     end
     
-    subgraph "Resource Layer"
-        H[Local Files]
-        I[Databases]
-        J[Web APIs]
-        K[Custom Tools]
+    subgraph "Local Data Sources"
+        K[Computer Files]
+        L[SQLite/Postgres]
+        M[Application Data]
     end
     
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    D --> F
+    subgraph "Remote Services"
+        N[Google Drive]
+        O[Slack]
+        P[GitHub]
+    end
+    
+    A --> D
+    B --> E
+    C --> F
+    
     D --> G
-    E --> H
-    F --> I
-    G --> J
-    G --> K
+    D --> H
+    E --> I
+    F --> J
     
-    style B fill:#ff9,stroke:#333,stroke-width:2px
-    style C fill:#bbf,stroke:#333,stroke-width:2px
-    style D fill:#bbf,stroke:#333,stroke-width:2px
+    G --> K
+    H --> L
+    I --> M
+    J --> N
+    J --> O
+    J --> P
+    
+    style D fill:#ff9,stroke:#333,stroke-width:2px
+    style E fill:#ff9,stroke:#333,stroke-width:2px
+    style F fill:#ff9,stroke:#333,stroke-width:2px
 ```
+
+**Key Components:**
+1. **MCP Hosts**: Programs that want to access data through MCP (e.g., Claude Desktop, IDE extensions)
+2. **MCP Clients**: Protocol clients that maintain 1:1 connections with servers
+3. **MCP Servers**: Lightweight programs that expose specific capabilities
+4. **Local Data Sources**: Files, databases, and services on your computer
+5. **Remote Services**: External systems accessible via APIs
 
 ### Communication Flow
 
@@ -612,33 +634,56 @@ mcp configure filesystem
 
 ## MCP vs Google's A2A Protocol
 
-### Understanding the Two-Layer Stack
+### Understanding the Complementary Protocols
 
-In 2024-2025, two major protocols emerged to address different layers of AI agent architecture:
+According to official documentation, MCP and A2A work together as complementary protocols:
 
 ```mermaid
 graph TD
-    subgraph "Agent Communication Layer"
-        A[Google A2A Protocol]
-        B[Agent ↔ Agent]
+    subgraph "Complete AI Agent Stack"
+        subgraph "Agent Communication Layer (A2A)"
+            A[LangGraph Agent]
+            B[CrewAI Agent]
+            C[Semantic Kernel Agent]
+        end
+        
+        subgraph "Tool & Data Layer (MCP)"
+            D[MCP Clients]
+            E[MCP Servers]
+        end
+        
+        subgraph "Resources"
+            F[Local Files]
+            G[Databases]
+            H[APIs]
+            I[Remote Services]
+        end
     end
     
-    subgraph "Tool Integration Layer"
-        C[Anthropic MCP]
-        D[Agent ↔ Tools/Data]
-    end
+    A <--> B
+    B <--> C
+    A <--> C
     
-    E[AI Agent 1] --> A
-    F[AI Agent 2] --> A
+    A --> D
+    B --> D
+    C --> D
     
-    E --> C
-    C --> G[Databases]
-    C --> H[APIs]
-    C --> I[File Systems]
+    D --> E
+    E --> F
+    E --> G
+    E --> H
+    E --> I
     
     style A fill:#4285f4,stroke:#333,stroke-width:2px
-    style C fill:#d4a373,stroke:#333,stroke-width:2px
+    style B fill:#4285f4,stroke:#333,stroke-width:2px
+    style C fill:#4285f4,stroke:#333,stroke-width:2px
+    style D fill:#d4a373,stroke:#333,stroke-width:2px
+    style E fill:#d4a373,stroke:#333,stroke-width:2px
 ```
+
+**Official Positioning:**
+- **MCP**: Connects agents to tools and APIs (vertical integration)
+- **A2A**: Enables dynamic, multimodal communication between different agents (horizontal integration)
 
 ### Key Differences
 

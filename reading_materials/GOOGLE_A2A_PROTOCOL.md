@@ -1,8 +1,10 @@
-# Google's Agent-to-Agent (A2A) Protocol: Enabling AI Agent Collaboration
+# Google's Agent-to-Agent (A2A) Protocol: Breaking Down Silos Between AI Agents
 
 ## Overview
 
-The Agent-to-Agent (A2A) Protocol, announced by Google in April 2025, is an open standard that enables AI agents to discover, communicate, and collaborate with each other across different platforms and frameworks. With support from over 50 technology partners including Atlassian, Box, Cohere, Intuit, LangChain, MongoDB, PayPal, Salesforce, SAP, ServiceNow, and major consulting firms, A2A represents a significant step toward creating an interconnected AI agent ecosystem.
+The Agent-to-Agent (A2A) Protocol is an open standard designed to break down silos and foster interoperability between AI agents across different frameworks and vendors. As stated on the official website, A2A enables agents to delegate sub-tasks, exchange information, and coordinate complex actions beyond what a single agent can achieve alone - all without needing to share internal memory, tools, or proprietary logic.
+
+The protocol has been donated to the Linux Foundation and represents a collaborative effort to create a common language for agent communication.
 
 **Official Resources:**
 - [A2A Announcement](https://developers.googleblog.com/en/a2a-a-new-era-of-agent-interoperability/)
@@ -21,24 +23,29 @@ The Agent-to-Agent (A2A) Protocol, announced by Google in April 2025, is an open
 
 ## Core Concepts
 
-### What Problem Does A2A Solve?
+### The Interoperability Vision
+
+As shown on the official A2A website, the protocol enables seamless communication between agents built on different frameworks:
 
 ```mermaid
 graph TD
-    subgraph "Without A2A"
-        A[Sales Agent<br/>Framework A] -.->|Custom Integration| B[Finance Agent<br/>Framework B]
-        A -.->|Different Protocol| C[HR Agent<br/>Framework C]
-        B -.->|Incompatible| C
+    subgraph "Multi-Framework Agent Ecosystem"
+        A[LangGraph<br/>Agent] <--> B[A2A Protocol]
+        C[CrewAI<br/>Agent] <--> B
+        D[Semantic Kernel<br/>Agent] <--> B
+        E[Custom Framework<br/>Agent] <--> B
+        
+        B --> F[Common Language]
+        F --> G[Task Delegation]
+        F --> H[Information Exchange]
+        F --> I[Complex Coordination]
     end
     
-    subgraph "With A2A"
-        D[Sales Agent<br/>Framework A] -->|A2A Protocol| E[Finance Agent<br/>Framework B]
-        D -->|A2A Protocol| F[HR Agent<br/>Framework C]
-        E -->|A2A Protocol| F
-    end
-    
-    style A fill:#fcc,stroke:#333,stroke-width:2px
-    style D fill:#cfc,stroke:#333,stroke-width:2px
+    style B fill:#4285f4,stroke:#333,stroke-width:4px
+    style A fill:#34a853,stroke:#333,stroke-width:2px
+    style C fill:#fbbc04,stroke:#333,stroke-width:2px
+    style D fill:#ea4335,stroke:#333,stroke-width:2px
+    style E fill:#9aa0a6,stroke:#333,stroke-width:2px
 ```
 
 A2A provides a **universal language** for AI agents to:
@@ -355,47 +362,40 @@ graph TD
 
 ## A2A vs MCP
 
-### Complementary Protocols
+### Official Complementary Positioning
+
+According to the official A2A documentation, these protocols work together:
 
 ```mermaid
 graph TD
-    subgraph "Complete AI Stack"
-        A[User Interface]
-        
-        subgraph "Agent Layer"
-            B[Primary Agent]
-            C[Specialist Agent 1]
-            D[Specialist Agent 2]
+    subgraph "The Two-Layer AI Infrastructure"
+        subgraph "Horizontal Layer: Agent Communication"
+            A[Agent 1] <--> B[A2A Protocol]
+            C[Agent 2] <--> B
+            D[Agent 3] <--> B
         end
         
-        subgraph "Protocol Layer"
-            E[A2A Protocol]
-            F[MCP Protocol]
-        end
-        
-        subgraph "Resource Layer"
-            G[Databases]
-            H[APIs]
-            I[File Systems]
+        subgraph "Vertical Layer: Tool Integration"
+            A --> E[MCP Client]
+            C --> F[MCP Client]
+            D --> G[MCP Client]
+            
+            E --> H[Tools & APIs]
+            F --> I[Databases]
+            G --> J[File Systems]
         end
     end
     
-    A --> B
-    B <--> E
-    E <--> C
-    E <--> D
-    
-    B --> F
-    C --> F
-    D --> F
-    
-    F --> G
-    F --> H
-    F --> I
-    
-    style E fill:#4285f4,stroke:#333,stroke-width:2px
+    style B fill:#4285f4,stroke:#333,stroke-width:4px
+    style E fill:#d4a373,stroke:#333,stroke-width:2px
     style F fill:#d4a373,stroke:#333,stroke-width:2px
+    style G fill:#d4a373,stroke:#333,stroke-width:2px
 ```
+
+**Official Description:**
+- **MCP**: Connects agents to tools and APIs (vertical integration)
+- **A2A**: Facilitates dynamic, multimodal communication between different agents (horizontal integration)
+- Together they enable agents to both access resources AND collaborate with each other
 
 ### When to Use Each
 
